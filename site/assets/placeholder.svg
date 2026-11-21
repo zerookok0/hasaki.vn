@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#f5f6f7"/>
+  <g fill="none" stroke="#c9d3ce" stroke-width="6" stroke-linecap="round">
+    <rect x="118" y="126" width="164" height="148" rx="14"/>
+    <circle cx="164" cy="172" r="16"/>
+    <path d="M124 250l44-44 34 34 30-24 46 46"/>
+  </g>
+  <text x="200" y="322" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" fill="#8fa39a">Hasaki.vn</text>
+</svg>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tài khoản của tôi | Hasaki.vn</title>
+  <script>
+  (function(){
+    var K=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id','fbclid','ttclid','gclid','adset_id','campaign_id','sub1','sub2','sub3','sub4','sub5'];
+    function grab(q){var o={},p=(q||'').replace(/^\?/,'').split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(kv.length<2)continue;try{var k=decodeURIComponent(kv[0]);if(K.indexOf(k)!==-1)o[k]=decodeURIComponent(kv.slice(1).join('='));}catch(e){}}return o;}
+    function load(){try{return JSON.parse(sessionStorage.getItem('bp_utm')||'{}')}catch(e){return {}}}
+    function save(o){try{sessionStorage.setItem('bp_utm',JSON.stringify(o))}catch(e){}try{var d=new Date();d.setTime(d.getTime()+7*864e5);document.cookie='bp_utm='+encodeURIComponent(JSON.stringify(o))+'; expires='+d.toUTCString()+'; path=/; SameSite=Lax';}catch(e){}}
+    var cur=load(),add=false;var m=grab(location.search);for(var a in m){cur[a]=m[a];add=true}
+    try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(n&&n.name){var mm=grab(n.name.split('?')[1]||'');for(var b in mm){cur[b]=mm[b];add=true}}}catch(e){}
+    try{if(document.referrer){var mm2=grab((document.referrer.split('?')[1])||'');for(var c in mm2){if(!cur[c]){cur[c]=mm2[c];add=true}}}}catch(e){}
+    if(add)save(cur);window.__BP_UTM__=cur;
+  })();
+  </script>
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="stylesheet" href="/assets/base.css">
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/pixel.js" defer></script>
+  <script src="/assets/auth.js" defer></script>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="wrap">
+    <div class="crumb"><a href="/">Trang chủ</a><span>&rsaquo;</span><span>Tài khoản</span></div>
+    <div class="cart-layout">
+      <div>
+        <div class="co-box">
+          <h1 style="font-size:18px;margin-bottom:12px">Thông tin tài khoản</h1>
+          <div id="acc-profile"></div>
+        </div>
+        <div class="co-box" style="margin-top:14px">
+          <h2 style="font-size:15px;margin-bottom:10px">Địa chỉ nhận hàng</h2>
+          <div id="acc-addr"></div>
+        </div>
+        <div class="co-box" style="margin-top:14px">
+          <h2 style="font-size:15px;margin-bottom:10px">Đơn hàng gần đây</h2>
+          <div id="acc-orders"></div>
+        </div>
+      </div>
+      <div>
+        <div class="sum-box">
+          <b style="font-size:15px">Thành viên Hasaki</b>
+          <p style="font-size:12.5px;color:#777;margin-top:8px">Hạng thành viên, voucher và điểm tích lũy được đồng bộ trên mọi thiết bị.</p>
+          <a class="btn btn-outline btn-block btn-sm" href="/catalog" style="margin-top:12px">Tiếp tục mua sắm</a>
+          <button class="btn btn-outline btn-block btn-sm" id="acc-logout" style="margin-top:8px">Đăng xuất</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

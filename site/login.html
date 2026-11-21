@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đăng nhập | Hasaki.vn</title>
+  <script>
+  (function(){
+    var K=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id','fbclid','ttclid','gclid','adset_id','campaign_id','sub1','sub2','sub3','sub4','sub5'];
+    function grab(q){var o={},p=(q||'').replace(/^\?/,'').split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(kv.length<2)continue;try{var k=decodeURIComponent(kv[0]);if(K.indexOf(k)!==-1)o[k]=decodeURIComponent(kv.slice(1).join('='));}catch(e){}}return o;}
+    function load(){try{return JSON.parse(sessionStorage.getItem('bp_utm')||'{}')}catch(e){return {}}}
+    function save(o){try{sessionStorage.setItem('bp_utm',JSON.stringify(o))}catch(e){}try{var d=new Date();d.setTime(d.getTime()+7*864e5);document.cookie='bp_utm='+encodeURIComponent(JSON.stringify(o))+'; expires='+d.toUTCString()+'; path=/; SameSite=Lax';}catch(e){}}
+    var cur=load(),add=false;var m=grab(location.search);for(var a in m){cur[a]=m[a];add=true}
+    try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(n&&n.name){var mm=grab(n.name.split('?')[1]||'');for(var b in mm){cur[b]=mm[b];add=true}}}catch(e){}
+    try{if(document.referrer){var mm2=grab((document.referrer.split('?')[1])||'');for(var c in mm2){if(!cur[c]){cur[c]=mm2[c];add=true}}}}catch(e){}
+    if(add)save(cur);window.__BP_UTM__=cur;
+  })();
+  </script>
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="stylesheet" href="/assets/base.css">
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/pixel.js" defer></script>
+  <script src="/assets/auth.js" defer></script>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="wrap">
+    <div class="co-box" style="max-width:520px;margin:26px auto">
+      <h1 style="font-size:20px;margin-bottom:6px">Đăng nhập</h1>
+      <p style="color:#777;font-size:13px;margin-bottom:16px">Nhập email hoặc số điện thoại và mật khẩu để tiếp tục.</p>
+      <form id="auth-form">
+        <div class="field"><label for="lg-email">Email / Số điện thoại</label>
+          <input id="lg-email" name="email" type="text" autocomplete="username" placeholder="email@example.com" required>
+        </div>
+        <div class="field"><label for="lg-pass">Mật khẩu</label>
+          <input id="lg-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••" required>
+        </div>
+        <div class="between" style="margin-bottom:14px;font-size:12.5px">
+          <label class="check"><input type="checkbox" id="lg-remember" checked> Ghi nhớ đăng nhập</label>
+          <a href="/policy?slug=support" style="color:#306e51">Quên mật khẩu?</a>
+        </div>
+        <button class="btn btn-green btn-block" type="submit">Đăng nhập</button>
+        <div id="auth-error" role="alert" style="color:#d0021b;font-size:13px;margin-top:10px;min-height:18px"></div>
+      </form>
+      <div style="margin-top:16px;font-size:13px;color:#777;text-align:center">
+        Chưa có tài khoản? <a href="/register" style="color:#306e51;font-weight:600">Đăng ký ngay</a>
+      </div>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

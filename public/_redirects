@@ -1,0 +1,6 @@
+# Cloudflare Pages 路由补充
+# 注意：不要为 .html 写 200 rewrite —— Pages clean URL 会把目标 .html 再 308 一次，来回死循环。
+# /deals、/brands、/product、/catalog、/cart、/search、/policy … 都由 Pages 原生 clean URL 直接 200 出 <name>.html。
+
+/danh-muc/*   /catalog.html   302
+/checkout-index.html  /checkout  301

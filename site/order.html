@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Đặt hàng thành công | Hasaki.vn</title>
+  <script>
+  (function(){
+    var K=['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id','fbclid','ttclid','gclid','adset_id','campaign_id','sub1','sub2','sub3','sub4','sub5'];
+    function grab(q){var o={},p=(q||'').replace(/^\?/,'').split('&');for(var i=0;i<p.length;i++){var kv=p[i].split('=');if(kv.length<2)continue;try{var k=decodeURIComponent(kv[0]);if(K.indexOf(k)!==-1)o[k]=decodeURIComponent(kv.slice(1).join('='));}catch(e){}}return o;}
+    function load(){try{return JSON.parse(sessionStorage.getItem('bp_utm')||'{}')}catch(e){return {}}}
+    function save(o){try{sessionStorage.setItem('bp_utm',JSON.stringify(o))}catch(e){}try{var d=new Date();d.setTime(d.getTime()+7*864e5);document.cookie='bp_utm='+encodeURIComponent(JSON.stringify(o))+'; expires='+d.toUTCString()+'; path=/; SameSite=Lax';}catch(e){}}
+    var cur=load(),add=false;var m=grab(location.search);for(var a in m){cur[a]=m[a];add=true}
+    try{var n=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];if(n&&n.name){var mm=grab(n.name.split('?')[1]||'');for(var b in mm){cur[b]=mm[b];add=true}}}catch(e){}
+    try{if(document.referrer){var mm2=grab((document.referrer.split('?')[1])||'');for(var c in mm2){if(!cur[c]){cur[c]=mm2[c];add=true}}}}catch(e){}
+    if(add)save(cur);window.__BP_UTM__=cur;
+  })();
+  </script>
+  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="stylesheet" href="/assets/base.css">
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/order.js" defer></script>
+</head>
+<body>
+  <header id="site-header"></header>
+  <main class="wrap">
+    <div class="co-box" style="max-width:720px;margin:24px auto;text-align:center">
+      <div style="width:64px;height:64px;border-radius:50%;background:#eafaf0;color:#25bc4e;display:grid;place-items:center;margin:0 auto 14px;font-size:32px">&#10003;</div>
+      <h1 style="font-size:22px;color:#306e51">Đặt hàng thành công!</h1>
+      <p style="color:#777;margin-top:8px">Cảm ơn bạn đã mua sắm tại Hasaki.vn. Chúng tôi sẽ liên hệ xác nhận đơn hàng trong thời gian sớm nhất.</p>
+      <div style="background:#fafafa;border-radius:8px;padding:14px;margin-top:18px;text-align:left;font-size:13px">
+        <div class="between"><span style="color:#777">Mã đơn hàng</span><b id="od-no">—</b></div>
+        <div class="between" style="margin-top:8px"><span style="color:#777">Tổng thanh toán</span><b id="od-total" style="color:#d0021b">—</b></div>
+        <div class="between" style="margin-top:8px"><span style="color:#777">Trạng thái</span><b style="color:#25bc4e">Đã ghi nhận</b></div>
+      </div>
+      <div id="od-items" style="margin-top:16px;text-align:left"></div>
+      <div style="margin-top:20px" class="center gap-8" style="justify-content:center">
+        <a class="btn btn-green btn-sm" href="/">Về trang chủ</a>
+        <a class="btn btn-outline btn-sm" href="/catalog">Tiếp tục mua sắm</a>
+      </div>
+    </div>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

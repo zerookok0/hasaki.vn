@@ -57,6 +57,7 @@ ok('connector.css 绝对路径', /href="\/bp\/connector\.css"/.test(coText));
 ok('页面无 <base> 标签', !/<base\b/i.test(coText));
 ok('无 Service Worker 注册', !/serviceWorker\s*\.\s*register/.test(coText));
 ok('页面无验证码', !/(turnstile|recaptcha|hcaptcha|grecaptcha)/i.test(coText));
+ok('结账页只有卡支付（无 COD 选项）', !/data-pay="cod"|Thanh toán khi nhận hàng|value="cod"/i.test(coText));
 ok('lang 为 vi', /<html lang="vi"/.test(coText));
 
 /* ---------- 3. /bp/ 资源（§2） ---------- */

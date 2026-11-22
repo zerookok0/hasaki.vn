@@ -183,6 +183,16 @@
       '<span style="font-size:11px;color:#999">Xem</span></a>';
   }
 
+  /* 移动端底部固定加购条 */
+  function stickyHTML(p) {
+    var sale = p.sale || HS.salePrice(p.market_price);
+    return '<div class="pd-sticky" id="pd-sticky">' +
+      '<div class="pd-sticky-p"><b>' + money(sale) + '</b><span>' + (p.market_price > sale ? money(p.market_price) : '') + '</span></div>' +
+      '<button class="btn btn-orange" id="pd-add2" type="button">&#128722; GIỎ HÀNG</button>' +
+      '<button class="btn btn-green" id="pd-buy2" type="button">MUA NGAY</button>' +
+      '</div>';
+  }
+
   function bind(p) {
     var thumbs = HS.q('#pd-thumbs');
     var mainImg = HS.q('#pd-main-img');
@@ -224,6 +234,18 @@
     var storeBtn = HS.q('#pd-store');
     if (storeBtn) storeBtn.addEventListener('click', function () { location.href = '/policy?slug=branch'; });
 
+    /* 移动端固定条 */
+    var add2 = HS.q('#pd-add2');
+    if (add2) add2.addEventListener('click', function () {
+      HS.cart.add(productForCart(p), qty);
+      HS.toast('Đã thêm vào giỏ hàng');
+    });
+    var buy2 = HS.q('#pd-buy2');
+    if (buy2) buy2.addEventListener('click', function () {
+      HS.cart.add(productForCart(p), qty);
+      location.href = '/checkout';
+    });
+
     var tabbar = HS.q('.pd-tabs .tabbar');
     if (tabbar) tabbar.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -263,18 +285,48 @@
       return;
     }
     var crumb = HS.q('#crumb'); if (crumb) crumb.innerHTML = crumbHTML(P);
-    root.innerHTML = '<div class="pd-top">' + galleryHTML(P) + asideHTML(P) + '</div>' + tabsHTML(P);
+    root.innerHTML = '<div class="pd-layout"><div class="pd-left">' + galleryHTML(P) + tabsHTML(P) + '</div>' + asideHTML(P) + '</div>' + stickyHTML(P);
     bind(P);
     activateTab(currentTab);
     document.title = P.name + ' | Hasaki.vn';
     HS.pixel.viewContent({ id: P.id, name: P.name, cat: P.cat_name, sale: P.sale, market_price: P.market_price });
   }
 
+  /* 规格（容量/重量）提取 + 同款变体（同品牌、名称去掉规格后一致） */
+  function specOf(name) {
+    var m = String(name || '').match(/(\d+(?:[.,]\d+)?\s*(?:ml|g|kg|mg|gói|viên|miếng|chiếc|tuýp|cặp|hộp|chai|lọ)[a-z]*)/i);
+    return m ? m[1].trim() : '';
+  }
+  function baseKey(name) {
+    return String(name || '').toLowerCase()
+      .replace(/\d+(?:[.,]\d+)?\s*(ml|g|kg|mg|gói|viên|miếng|chiếc|tuýp|cặp|hộp|chai|lọ)[a-z]*/gi, '')
+      .replace(/\[[^\]]*\]/g, '')
+      .replace(/\s+/g, ' ').trim().slice(0, 46);
+  }
+  function buildVariants(p, rows) {
+    if (!p || !p.brand) return [];
+    var key = baseKey(p.name);
+    var mySpec = specOf(p.name);
+    var out = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r[0] === p.id) continue;
+      if (String(r[2]) !== String(p.brand.name)) continue;
+      if (baseKey(r[1]) !== key) continue;
+      var sp = specOf(r[1]);
+      out.push({ id: r[0], label: sp || 'Mặc định', spec: sp, sale: r[4] });
+      if (out.length >= 8) break;
+    }
+    if (!out.length) return [];
+    out.unshift({ id: p.id, label: mySpec || 'Mặc định', spec: mySpec, sale: p.sale, current: true });
+    return out;
+  }
+
   async function boot() {
     HS.mountChrome('');
     P = await HS.loadProduct(id);
     if (P && !P.dead) {
-      /* 补齐图片、推荐（同品牌/同分类） */
+      /* 补齐图片、推荐（同品牌/同分类）、容量变体 */
       if (!P.img) P.img = (P.gallery && P.gallery[0]) || '';
       try {
         var idx = await HS.loadIndex();
@@ -288,6 +340,7 @@
         }
         P.sameBrand = sameBrand;
         P.related = related;
+        P.variants = buildVariants(P, rows);
       } catch (e) {}
     }
     render();

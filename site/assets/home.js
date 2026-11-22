@@ -1,131 +1,196 @@
-/* 首页渲染：全部数据来自 /data/home.json（构建期由抓取结果生成） */
+/* 首页渲染：完全按源站 /mobile/v4/main/block 的区块结构
+ * 顺序：SlideBanner（轮播）→ Shortcut（快捷入口）→ DEAL ĐỈNH（Flash）→
+ *       DEALS ĐANG DIỄN RA（横滑）→ TÌM KIẾM NHIỀU NHẤT（热搜词）→
+ *       THƯƠNG HIỆU NỔI BẬT（品牌墙）→ DANH MỤC NGÀNH HÀNG（类目瓷片）
+ */
 (function () {
   'use strict';
   var HS = window.HS;
-  var ICONS = {
-    deal: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7M2 7h20v5H2zM12 7v13"/></svg>',
-    phone: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>',
-    speaker: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"/><circle cx="12" cy="15" r="3"/><circle cx="12" cy="7" r="1.4"/></svg>',
-    clean: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h4l2 6H6z"/><path d="M7 9h10l1 12H6z"/></svg>',
-    bag: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
-    baby: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="5"/><path d="M6 20c1.5-3 3.5-4 6-4s4.5 1 6 4"/></svg>',
-    clock: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>',
-    spark: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.2 6.2L21 12l-6.8 2.8L12 21l-2.2-6.2L3 12l6.8-2.8z"/></svg>',
-  };
 
-  function brandbar(d) {
-    var el = HS.q('#brandbar');
-    if (!el) return;
-    var logos = (d.brandbar || []).map(function (u) { return '<img src="' + HS.esc(u) + '" alt="">'; }).join('');
-    el.innerHTML = '<div class="wrap">' +
-      '<div class="brandbar-logos">' + logos + '</div>' +
-      '<div class="brandbar-promo">' + (d.promo ? '<img src="' + HS.esc(d.promo) + '" alt="Khuyến mãi">' : '') + '</div>' +
-      '</div>';
-  }
+  function esc(s) { return HS.esc(s); }
 
-  function hero(d) {
+  /* ---------- 1. 轮播 ---------- */
+  function slider(d) {
     var el = HS.q('#hero-slot');
     if (!el) return;
-    var main = (d.hero || []).slice(0, 3).map(function (u) {
-      return '<a class="hero-tile" href="/catalog"><img src="' + HS.esc(u) + '" alt=""></a>';
-    }).join('');
-    var side = (d.heroSide || []).slice(0, 2).map(function (u) {
-      return '<a class="hero-tile" href="/catalog"><img src="' + HS.esc(u) + '" alt=""></a>';
-    }).join('');
-    el.innerHTML = '<div class="hero-grid mt-12">' + main + '<div style="display:grid;grid-template-rows:1fr 1fr;gap:8px">' + side + '</div></div>';
+    var list = d.banners || [];
+    if (!list.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="hero-slider" id="hero-slider">' +
+      list.map(function (b, i) {
+        return '<a class="hero-slide' + (i === 0 ? ' on' : '') + '" href="' + esc(b.url) + '" data-i="' + i + '">' +
+          '<img src="' + esc(b.img) + '" alt="' + esc(b.name) + '"' + (i ? ' loading="lazy"' : '') + '></a>';
+      }).join('') +
+      '<button class="hero-nav prev" type="button" aria-label="Trước">&#10094;</button>' +
+      '<button class="hero-nav next" type="button" aria-label="Sau">&#10095;</button>' +
+      '<div class="hero-dots">' + list.map(function (b, i) {
+        return '<button type="button" class="' + (i === 0 ? 'on' : '') + '" data-dot="' + i + '" aria-label="Slide ' + (i + 1) + '"></button>';
+      }).join('') + '</div>' +
+      '</div>';
+
+    var slides = HS.qa('.hero-slide', el);
+    var dots = HS.qa('[data-dot]', el);
+    var cur = 0, timer = null;
+
+    function go(i) {
+      cur = (i + slides.length) % slides.length;
+      slides.forEach(function (s, k) { s.classList.toggle('on', k === cur); });
+      dots.forEach(function (d, k) { d.classList.toggle('on', k === cur); });
+    }
+    function start() { stop(); timer = setInterval(function () { go(cur + 1); }, 5000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    var prev = HS.q('.hero-nav.prev', el);
+    var next = HS.q('.hero-nav.next', el);
+    if (prev) prev.addEventListener('click', function (e) { e.preventDefault(); go(cur - 1); start(); });
+    if (next) next.addEventListener('click', function (e) { e.preventDefault(); go(cur + 1); start(); });
+    dots.forEach(function (d) {
+      d.addEventListener('click', function (e) { e.preventDefault(); go(Number(d.dataset.dot)); start(); });
+    });
+    el.addEventListener('mouseenter', stop);
+    el.addEventListener('mouseleave', start);
+
+    /* 触摸滑动 */
+    var sx = 0;
+    el.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; stop(); }, { passive: true });
+    el.addEventListener('touchend', function (e) {
+      var dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
+      start();
+    }, { passive: true });
+
+    start();
   }
 
-  function quick(d) {
+  /* ---------- 2. 快捷入口 ---------- */
+  function shortcuts(d) {
     var el = HS.q('#quick-slot');
     if (!el) return;
-    var items = d.quick || [];
-    el.innerHTML = '<div class="quickbar">' + items.map(function (q) {
-      return '<a class="quick" href="' + HS.esc(q.href || '/catalog') + '"><i>' + (ICONS[q.icon] || ICONS.spark) + '</i><span>' + HS.esc(q.label) + '</span></a>';
+    var items = d.shortcuts || [];
+    if (!items.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="quickbar">' + items.map(function (s) {
+      return '<a class="quick" href="' + esc(s.url) + '"><i><img src="' + esc(s.img) + '" alt=""></i><span>' + esc(s.title) + '</span></a>';
     }).join('') + '</div>';
   }
 
+  /* ---------- 3. Flash（DEAL ĐỈNH） ---------- */
   function flash(d) {
     var el = HS.q('#flash-slot');
     if (!el) return;
-    var cards = (d.flash || []).map(function (p) { return HS.cardHTML(p); }).join('');
+    var items = d.flash || [];
+    if (!items.length) { el.innerHTML = ''; return; }
     el.innerHTML = '<div class="flash-wrap">' +
-      '<div class="flash-head"><span class="t">Flash deals</span>' +
+      '<div class="flash-head"><span class="t">' + esc(d.flashTitle || 'DEAL ĐỈNH') + '</span>' +
       '<span class="flash-clock" data-flash-clock><b>00</b>:<b>00</b>:<b>00</b></span>' +
-      '<a href="/deals" style="margin-left:auto;color:#fff;font-size:12px">Xem tất cả</a></div>' +
-      '<div class="flash-cards">' + cards + '</div></div>';
-    /* 倒计时（8 小时内循环） */
-    var el2 = HS.q('[data-flash-clock]', el);
-    if (el2) {
+      '<a href="' + esc(d.flashUrl || '/deals') + '" style="margin-left:auto;color:#fff;font-size:12px">Xem tất cả</a></div>' +
+      '<div class="flash-cards">' + items.slice(0, 6).map(function (p) { return HS.cardHTML(p); }).join('') + '</div></div>';
+    var clock = HS.q('[data-flash-clock]', el);
+    if (clock) {
       var end = Date.now() + 8 * 3600e3;
       (function tick() {
         var left = Math.max(0, end - Date.now());
         var h = Math.floor(left / 3600e3), m = Math.floor(left % 3600e3 / 60e3), s = Math.floor(left % 60e3 / 1000);
-        el2.innerHTML = '<b>' + String(h).padStart(2, '0') + '</b>:<b>' + String(m).padStart(2, '0') + '</b>:<b>' + String(s).padStart(2, '0') + '</b>';
+        clock.innerHTML = '<b>' + String(h).padStart(2, '0') + '</b>:<b>' + String(m).padStart(2, '0') + '</b>:<b>' + String(s).padStart(2, '0') + '</b>';
         setTimeout(tick, 1000);
       })();
     }
   }
 
-  function subBanners(d) {
+  /* ---------- 4. DEALS ĐANG DIỄN RA（横滑） ---------- */
+  function deals(d) {
     var el = HS.q('#subbanner-slot');
     if (!el) return;
-    var items = d.subBanners || [];
-    el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(' + Math.min(3, items.length || 1) + ',1fr);gap:10px">' +
-      items.map(function (u) { return '<a href="/catalog" class="hero-tile"><img src="' + HS.esc(u) + '" alt="" style="height:140px"></a>'; }).join('') +
-      '</div>';
+    var items = d.deals || [];
+    if (!items.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="section-head"><div class="section-title" style="color:#ff6a00">' + esc(d.dealsTitle) + '</div>' +
+      '<a class="more" href="' + esc(d.dealsUrl) + '">Xem tất cả</a></div>' +
+      '<div class="hscroll" id="deals-scroll">' + items.map(function (p) {
+        return '<div class="hscroll-item">' + HS.cardHTML(p) + '</div>';
+      }).join('') + '</div>';
+    bindScroll(HS.q('#deals-scroll'));
   }
 
-  function cats(d) {
-    var el = HS.q('#cats-slot');
+  function bindScroll(box) {
+    if (!box) return;
+    var pressed = false, startX = 0, startLeft = 0, moved = false;
+    box.addEventListener('mousedown', function (e) {
+      pressed = true; moved = false; startX = e.pageX; startLeft = box.scrollLeft;
+      box.classList.add('dragging');
+    });
+    window.addEventListener('mouseup', function () { pressed = false; box.classList.remove('dragging'); });
+    box.addEventListener('mousemove', function (e) {
+      if (!pressed) return;
+      var dx = e.pageX - startX;
+      if (Math.abs(dx) > 4) moved = true;
+      box.scrollLeft = startLeft - dx;
+    });
+    box.addEventListener('click', function (e) { if (moved) { e.preventDefault(); } }, true);
+  }
+
+  /* ---------- 5. TÌM KIẾM NHIỀU NHẤT（热搜词） ---------- */
+  function topSearch(d) {
+    var el = HS.q('#best-slot');
     if (!el) return;
-    var items = d.cats || [];
-    el.innerHTML = '<div class="section-head"><div class="section-title">Danh mục</div><a class="more" href="/catalog">Xem tất cả</a></div>' +
-      '<div class="tile-grid">' + items.map(function (c) {
-        return '<a class="tile" href="/catalog?slug=' + encodeURIComponent(c.slug) + '"><i><img loading="lazy" src="' + HS.esc(c.img) + '" alt=""></i><span>' + HS.esc(c.name) + '</span></a>';
+    var items = d.topSearch || [];
+    if (!items.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="section-head"><div class="section-title">' + esc(d.topSearchTitle) + '</div></div>' +
+      '<div class="search-grid">' + items.map(function (s) {
+        return '<div class="search-card"><div class="sc-head"><b>' + esc(s.title) + '</b><span>' + esc(s.sub) + '</span></div>' +
+          '<div class="sc-imgs">' + (s.images || []).slice(0, 3).map(function (u, i) {
+            return '<a href="' + esc((s.urls && s.urls[i]) || s.url) + '"><img loading="lazy" src="' + esc(u) + '" alt=""></a>';
+          }).join('') + '</div>' +
+          '<a class="sc-more" href="' + esc(s.url) + '">Xem tất cả &rsaquo;</a></div>';
       }).join('') + '</div>';
   }
 
+  /* ---------- 6. THƯƠNG HIỆU NỔI BẬT ---------- */
   function brands(d) {
     var el = HS.q('#brands-slot');
     if (!el) return;
     var items = d.brands || [];
-    el.innerHTML = '<div class="section-head"><div class="section-title">Thương hiệu</div><a class="more" href="/brands">Xem tất cả</a></div>' +
+    if (!items.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="section-head"><div class="section-title">' + esc(d.brandsTitle) + '</div>' +
+      '<a class="more" href="/brands">Xem tất cả</a></div>' +
       '<div class="brand-grid">' + items.map(function (b) {
-        return '<a class="brand-tile" href="/search?q=' + encodeURIComponent(b.name) + '"><img loading="lazy" src="' + HS.esc(b.img) + '" alt="' + HS.esc(b.name) + '"></a>';
+        return '<a class="brand-tile" href="' + esc(b.url) + '" title="' + esc(b.name) + '">' +
+          '<img loading="lazy" src="' + esc(b.img) + '" alt="' + esc(b.name) + '"></a>';
       }).join('') + '</div>';
   }
 
-  function best(d) {
-    var el = HS.q('#best-slot');
+  /* ---------- 7. DANH MỤC NGÀNH HÀNG（类目瓷片） ---------- */
+  function cats(d) {
+    var el = HS.q('#cats-slot');
     if (!el) return;
-    var items = d.best || [];
-    el.innerHTML = '<div class="section-head"><div class="section-title">Bán chạy</div><a class="more" href="/catalog?sort=best">Xem tất cả</a></div>' +
-      '<div class="rank-grid">' + items.map(function (p) {
-        return '<a class="rank-card" href="/product?id=' + p.id + '">' +
-          '<div class="n">' + (p.rateCount ? p.rateCount + ' đánh giá' : (p.popular ? HS.moneyPlain(p.popular) + ' đã bán' : 'Chính hãng')) + '</div>' +
-          '<img loading="lazy" src="' + HS.esc(p.img) + '" alt="">' +
-          '<div class="name">' + HS.esc(p.name) + '</div>' +
-          '<div class="card-price"><span class="price-now">' + HS.money(p.sale) + '</span></div></a>';
+    var items = d.cats || [];
+    if (!items.length) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="section-head"><div class="section-title">' + esc(d.catsTitle) + '</div>' +
+      '<a class="more" href="/catalog">Xem tất cả</a></div>' +
+      '<div class="tile-grid">' + items.map(function (c) {
+        return '<a class="tile" href="' + esc(c.url) + '"><i><img loading="lazy" src="' + esc(c.img) + '" alt=""></i><span>' + esc(c.name) + '</span></a>';
       }).join('') + '</div>';
   }
 
-  function topsearch(d) {
-    var el = HS.q('#topsearch-slot');
+  /* 顶部品牌条（用 brand block 的前几个 cover） */
+  function brandbar(d) {
+    var el = HS.q('#brandbar');
     if (!el) return;
-    var items = d.topSearch || [];
-    el.innerHTML = '<div class="section-head"><div class="section-title">Top tìm kiếm</div></div>' +
-      '<div class="grid-4">' + items.map(function (p) {
-        return '<a class="card" href="/product?id=' + p.id + '"><div class="card-media"><img loading="lazy" src="' + HS.esc(p.img) + '" alt=""></div>' +
-          '<div class="card-body"><div class="card-price"><span class="price-now">' + HS.money(p.sale) + '</span></div>' +
-          '<div class="card-name">' + HS.esc(p.name) + '</div></div></a>';
-      }).join('') + '</div>';
+    var logos = (d.brands || []).slice(0, 5).map(function (b) { return '<img src="' + esc(b.img) + '" alt="">'; }).join('');
+    el.innerHTML = '<div class="wrap"><div class="brandbar-logos">' + logos + '</div></div>';
   }
 
   function boot() {
     HS.mountChrome('DANH MỤC');
     fetch('/data/home.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })
       .then(function (d) {
-        brandbar(d); hero(d); quick(d); flash(d); subBanners(d); cats(d); brands(d); best(d); topsearch(d);
+        brandbar(d); slider(d); shortcuts(d); flash(d); deals(d); topSearch(d); brands(d); cats(d);
+        /* 源站区块顺序：轮播 → 快捷入口 → Flash → Deals → 热搜 → 品牌 → 类目 */
+        var main = HS.q('#home-main');
+        if (main) {
+          ['#hero-slot', '#quick-slot', '#flash-slot', '#subbanner-slot', '#best-slot', '#brands-slot', '#cats-slot']
+            .forEach(function (sel) {
+              var n = HS.q(sel);
+              if (n && n.parentNode === main) main.appendChild(n);
+            });
+        }
       });
   }
 

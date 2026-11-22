@@ -10,8 +10,8 @@
 
 | 项 | 说明 |
 |---|---|
-| 首页 | `/` — 顶部品牌条 + 绿色 header + 二级导航 + hero 三图 + 8 个圆角快捷入口 + Flash Deals（倒计时）+ 品牌 sub-banner + 分类瓷片 + 品牌墙 + Bán chạy + Top tìm kiếm + 四列页脚 |
-| 分类页 | `/catalog?slug=<cat>` — 左侧分类树（一/二/三级，带商品数）+ 价格区间 + 品牌复选；右侧排序 tab + 4 列商品卡 + 分页（40/页） |
+| 首页 | `/` — 顶部品牌条 + 绿色 header（DANH MỤC 悬停出四列分类下拉）+ 二级导航 + **轮播（源站 9 张 SlideBanner，自动播放/箭头/圆点/触摸滑动）** + 10 个快捷入口 + **DEAL ĐỈNH**（Flash，倒计时）+ **DEALS ĐANG DIỄN RA**（拖拽横滑）+ **TÌM KIẾM NHIỀU NHẤT**（热搜词卡，每词 3 张商品图）+ **THƯƠNG HIỆU NỔI BẬT**（18 个品牌 cover）+ **DANH MỤC NGÀNH HÀNG**（9 个类目瓷片）+ 四列页脚，区块顺序与源站 `/mobile/v4/main/block` 一致 |
+| 分类页 | `/catalog?slug=<cat>` — 左侧分类树（一/二/三级，带商品数）+ 价格区间 + 品牌复选；右侧排序 tab + 4 列商品卡 + 分页（40/页）。**每个类目都有独立分片**（含父类目聚合子类商品），不会所有类目都掉进同一批商品 |
 | 商品页 | `/product?id=<id>` — 左缩略图列 + 大图 + 底部小图，右侧标题/英文名/评分/促销/六折价/规格/数量/加购/立即购买，右栏配送信任条 + 品牌卡 + 同款推荐；下方 6 个 tab（Mô tả / Thông số / Thành phần / HDSD / Đánh giá / Hỏi đáp） |
 | 搜索 | `/search?q=` — 全量本地索引，越南语去音调归一化 + 多关键词包含匹配 + 品牌/价格筛选 |
 | 购物车 | `/cart` — 改数量、删除、原价/节省/合计 |
@@ -274,6 +274,8 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
   其余商品按「同系列 → 同品牌」挂真实评论并**显式标注来源**（`Nhận xét từ khách hàng đã mua sản phẩm cùng dòng / cùng thương hiệu`），
   覆盖率 93%（32,098 / 34,477），剩下 2,379 个品牌本身无任何评论的商品显示空态文案，**不编造评价**。
   原站只有 9.5% 商品有星级评分（3,261 个），这部分全部拉到。
+- 首页区块：`GET /mobile/v4/main/block`（SlideBanner 9 张 / Shortcut 10 个 / DEALS 10 件 / TopSearch 4 个热搜词 / 品牌 18 个 / 类目 9 个）
+  + `GET /mobile/v3/main/deal-products`（Flash 选品）。轮播、快捷入口、热搜词、品牌、类目全部按源站数据渲染，不再用本地推算。
 - 图片：`media.hcdn.vn` 可直连，站内**热链**，不下载二进制；原站无图的 SKU 用 `/assets/placeholder.svg`。
 - 条款正文：`hotro.hasaki.vn` 的政策页，用无头 Edge 渲染后提取正文（浏览器已解码实体、展开折叠）。
 - 分类树：由商品详情的 `category_list`（一级→末级路径）聚合出 162 个类目，附商品计数。

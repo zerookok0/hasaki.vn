@@ -237,8 +237,22 @@ for (const f of files) {
     };
   }
 
-  if (!catRows.has(leafSlug)) catRows.set(leafSlug, { name: leafName, rows: [] });
-  catRows.get(leafSlug).rows.push(row);
+  /* 类目归属：商品加入其分类路径上的**每一个**类目（含父级），按 slug 去重
+     —— 这样点任何一级/二级类目都能看到自己（含子孙）的商品，而不是回退到全量列表 */
+  {
+    const seenSlug = new Set();
+    for (const c of cats) {
+      const cs = slugify(c.name);
+      if (seenSlug.has(cs)) continue;
+      seenSlug.add(cs);
+      if (!catRows.has(cs)) catRows.set(cs, { name: c.name, rows: [] });
+      catRows.get(cs).rows.push(row);
+    }
+    if (!seenSlug.has(leafSlug)) {
+      if (!catRows.has(leafSlug)) catRows.set(leafSlug, { name: leafName, rows: [] });
+      catRows.get(leafSlug).rows.push(row);
+    }
+  }
 
   // 首页候选池
   const dealPct2 = dealPct;
@@ -268,11 +282,20 @@ const catOut = cats.map((c) => ({ ...c, slug: slugify(c.name) }));
 fs.writeFileSync(path.join(DATA, 'categories.json'), JSON.stringify(catOut));
 
 /* ---------- 类目行 ---------- */
-const MAX_ROWS = 2000;
+const MAX_ROWS = 5000;
 for (const [slug, obj] of catRows) {
   fs.writeFileSync(path.join(DATA, 'cat', slug + '.json'), JSON.stringify({ slug, name: obj.name, rows: obj.rows.slice(0, MAX_ROWS) }));
 }
 console.log('cat files', catRows.size);
+
+/* 每个类目都要有分片文件（没有商品的类目也写空数组，避免前端回退到全量列表） */
+let emptyCatFiles = 0;
+for (const c of cats) {
+  const slug = slugify(c.name);
+  const f = path.join(DATA, 'cat', slug + '.json');
+  if (!fs.existsSync(f)) { fs.writeFileSync(f, JSON.stringify({ slug, name: c.name, rows: [] })); emptyCatFiles++; }
+}
+console.log('cat files ensured:', emptyCatFiles);
 
 /* ---------- brands.json（品牌墙） ---------- */
 const brandsOut = [...brandMap.values()].sort((a, b) => b.count - a.count)
@@ -296,28 +319,99 @@ const brandsTop = [...brandMap.values()].filter((b) => b.image && b.count > 3).s
 
 const BANNERS = JSON.parse(fs.readFileSync(path.join(RAW, 'banners.json'), 'utf8'));
 
+/* ---------- home.json：完全按源站首页区块（/mobile/v4/main/block + deal-products） ---------- */
+function loadJsonOr(p, fallback) {
+  try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return fallback; }
+}
+const BLOCK = loadJsonOr(path.join(RAW, 'home-block-desktop.json'), { data: { blocks: [] } });
+const DEALAPI = loadJsonOr(path.join(RAW, 'home-deals.json'), { data: { deal_products: [] } });
+const blocks = (BLOCK.data && BLOCK.data.blocks) || [];
+const blockOf = (type) => blocks.find((b) => b.type === type) || null;
+
+/* 站内链接：源站 URL → 站内路径 */
+function toInternal(url, id) {
+  if (id) return '/product?id=' + id;
+  return '/catalog';
+}
+
+/* 首页商品卡（价格统一走 6 折） */
+function blockProduct(p) {
+  const market = Number(p.market_price) || Number(p.price) || 0;
+  const sale = salePrice(market);
+  const id = Number(p.id) || 0;
+  return {
+    id,
+    name: p.name || '',
+    brandName: (p.brand && p.brand.name) || '',
+    market_price: market,
+    sale,
+    img: p.image || '',
+    cat: p.category_name || '',
+    rate: (p.rating && p.rating.average) || 0,
+    rateCount: (p.rating && p.rating.total) || 0,
+    popular: p.bought_count || 0,
+    dealPercent: (p.deal && p.deal.bought_percent) || 0,
+    url: toInternal(p.product_url, id),
+    sourceUrl: p.product_url || '',
+  };
+}
+
+const bannerBlock = blockOf('SlideBanner');
+const shortcutBlock = blockOf('Shortcut');
+const dealsBlock = blockOf('ProductHorizontalListScroll');
+const topSearchBlock = blockOf('TopSearch');
+const brandBlock = blockOf('BrandHorizontalListScroll');
+const catBlock = blockOf('CategoryListScroll');
+
 const home = {
-  hero: BANNERS.hero,
-  heroSide: BANNERS.heroSide,
-  brandbar: brandsTop.slice(0, 4).map((b) => b.image).filter(Boolean),
-  promo: BANNERS.promo,
-  subBanners: BANNERS.subBanners,
-  quick: [
-    { icon: 'deal', label: 'Siêu Deal 7 Ngày', href: '/deals' },
-    { icon: 'spark', label: 'Deal Đỉnh', href: '/deals' },
-    { icon: 'phone', label: 'Phụ Kiện Điện Thoại', href: '/catalog' },
-    { icon: 'speaker', label: 'Thiết Bị Âm Thanh', href: '/catalog' },
-    { icon: 'clean', label: 'Vệ Sinh Nhà Cửa', href: '/catalog' },
-    { icon: 'bag', label: 'Balo & Túi Xách', href: '/catalog' },
-    { icon: 'baby', label: 'Sản Phẩm Cho Bé', href: '/catalog' },
-    { icon: 'clock', label: 'Đặt Hẹn Clinic', href: '/policy?slug=clinic' },
-  ],
-  flash: pickRows(heroPool.flash, 6, 'dealPct').map((r) => ({ ...toProd(r) })),
-  cats: tileCats,
-  brands: brandsTop.map((b) => ({ name: b.name, img: b.image })),
-  best: pickRows(heroPool.best, 6, 'rateTotal').map(toProd),
-  topSearch: pickRows(heroPool.top, 6, 'rate').map(toProd),
+  banners: ((bannerBlock && bannerBlock.data.banners) || []).map((b) => ({
+    name: b.name || '', img: b.image || '', url: toInternal(b.url, 0),
+  })),
+  shortcuts: ((shortcutBlock && shortcutBlock.data.shortcuts) || []).map((s) => ({
+    title: s.title || '', img: s.image || '', url: toInternal(s.url, 0),
+  })),
+  dealsTitle: (dealsBlock && dealsBlock.data.title) || 'DEALS ĐANG DIỄN RA',
+  dealsUrl: '/deals',
+  deals: ((dealsBlock && dealsBlock.data.products) || []).map(blockProduct),
+  topSearchTitle: (topSearchBlock && topSearchBlock.data.title) || 'TÌM KIẾM NHIỀU NHẤT',
+  topSearch: ((topSearchBlock && topSearchBlock.data.searches) || []).map((s) => ({
+    title: s.title || '', sub: s.sub_title || '', url: '/search?q=' + encodeURIComponent(s.title || ''),
+    images: (s.search_list || []).map((x) => x.image).filter(Boolean),
+    urls: (s.search_list || []).map((x) => {
+      const m = String(x.url || '').match(/-(\d+)\.html$/);
+      return m ? '/product?id=' + m[1] : '/search?q=' + encodeURIComponent(s.title || '');
+    }),
+  })),
+  brandsTitle: (brandBlock && brandBlock.data.title) || 'THƯƠNG HIỆU NỔI BẬT',
+  brands: ((brandBlock && brandBlock.data.brands) || []).map((b) => ({
+    name: b.name || '', img: b.image_150_75 || b.image_140_70 || b.image || b.cover || '',
+    url: '/search?q=' + encodeURIComponent(b.name || ''),
+  })),
+  catsTitle: (catBlock && catBlock.data.title) || 'DANH MỤC NGÀNH HÀNG',
+  cats: ((catBlock && catBlock.data.categories) || []).map((c) => {
+    /* 用源站类目名对齐到我们的 slug（名字完全一致才用，否则按名字 slugify） */
+    const hit = catOut.find((x) => x.name === c.name);
+    const slug = hit ? hit.slug : slugify(c.name);
+    return { name: c.name || '', img: c.image || '', url: '/catalog?slug=' + encodeURIComponent(slug) };
+  }),
+  flashTitle: 'DEAL ĐỈNH',
+  flashUrl: '/deals',
+  flash: ((DEALAPI.data && DEALAPI.data.deal_products) || []).map(blockProduct),
   stats: { products: indexRows.length, categories: cats.length, brands: brandMap.size },
 };
+
+/* 兜底：区块抓不到时用本地数据（保证页面不空） */
+if (!home.banners.length) {
+  home.banners = BANNERS.hero.map((u, i) => ({ name: 'Banner ' + (i + 1), img: u, url: '/deals' }));
+}
+if (!home.deals.length) home.deals = pickRows(heroPool.flash, 10, 'dealPct').map(toProd);
+if (!home.cats.length) home.cats = tileCats.map((c) => ({ name: c.name, img: c.img, url: '/catalog?slug=' + c.slug }));
+if (!home.brands.length) home.brands = brandsTop.map((b) => ({ name: b.name, img: b.image, url: '/search?q=' + encodeURIComponent(b.name) }));
+if (!home.flash.length) home.flash = pickRows(heroPool.flash, 6, 'dealPct').map(toProd);
+
+fs.writeFileSync(path.join(DATA, 'home.json'), JSON.stringify(home));
+console.log('home.json ok | banners', home.banners.length, '| shortcuts', home.shortcuts.length,
+  '| deals', home.deals.length, '| topSearch', home.topSearch.length, '| brands', home.brands.length,
+  '| cats', home.cats.length, '| flash', home.flash.length);
 fs.writeFileSync(path.join(DATA, 'home.json'), JSON.stringify(home));
 console.log('home.json ok; stats', JSON.stringify(home.stats));

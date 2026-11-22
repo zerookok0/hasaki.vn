@@ -133,7 +133,10 @@ ok('/data/p/<bucket>.json 可读', pb.status === 200 && pb.body && Object.keys(p
 const cats = await json('/data/categories.json');
 ok('/data/categories.json 有分类', Array.isArray(cats.body) && cats.body.length > 20, 'n=' + (cats.body || []).length);
 const home = await json('/data/home.json');
-ok('/data/home.json 有 flash/best', home.body && Array.isArray(home.body.flash) && Array.isArray(home.body.best));
+ok('/data/home.json 有 banner/flash/deals/cats',
+  home.body && Array.isArray(home.body.banners) && home.body.banners.length > 0 &&
+  Array.isArray(home.body.flash) && home.body.flash.length > 0 &&
+  Array.isArray(home.body.deals) && Array.isArray(home.body.cats) && home.body.cats.length > 0);
 const brands = await json('/data/brands.json');
 ok('/data/brands.json', Array.isArray(brands.body) && brands.body.length > 20);
 const policy = await json('/data/policy.json');

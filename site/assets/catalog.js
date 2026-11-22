@@ -173,12 +173,9 @@
       try {
         var j = await fetch('/data/cat/' + encodeURIComponent(state.slug) + '.json').then(function (r) { return r.ok ? r.json() : null; });
         all = (j && j.rows) || [];
+        if (j && j.name) catMeta.name = j.name;
       } catch (e) { all = []; }
-      if (!all.length) {
-        var idx = await HS.loadIndex();
-        all = idx.rows || [];
-        catMeta = catMeta || { name: 'Tất cả sản phẩm', slug: '' };
-      }
+      /* 类目分片缺失时不再回退到全量列表（否则每个类目都长一样） */
     } else {
       var idx2 = await HS.loadIndex();
       all = idx2.rows || [];

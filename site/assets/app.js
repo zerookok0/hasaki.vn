@@ -223,7 +223,12 @@
       ['BÁN CHẠY', '/catalog?sort=best'],
       ['CLINIC & SPA', '/policy?slug=clinic'],
       ['DERMAHAIR', '/policy?slug=dermahair'],
-    ].map(function (n) {
+    ].map(function (n, idx) {
+      if (idx === 0) {
+        /* 首页顶部「DANH MỤC」带分类下拉（一级 + 二级） */
+        return '<div class="nav-item nav-cat"><a href="' + n[1] + '"' + (active === n[0] ? ' class="active"' : '') + '>' + n[0] + ' &#9662;</a>' +
+          '<div class="nav-drop" id="nav-drop"></div></div>';
+      }
       return '<a href="' + n[1] + '"' + (active === n[0] ? ' class="active"' : '') + '>' + n[0] + '</a>';
     }).join('');
 
@@ -332,6 +337,20 @@
         if (s) s.classList.toggle('open');
       });
     });
+    /* 触屏设备：点「DANH MỤC」展开分类下拉（桌面仍是 hover） */
+    var catNav = HS.q('.nav-item.nav-cat');
+    if (catNav) {
+      var link = HS.q('a', catNav);
+      if (link) link.addEventListener('click', function (e) {
+        if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
+          e.preventDefault();
+          catNav.classList.toggle('open');
+        }
+      });
+      document.addEventListener('click', function (e) {
+        if (!catNav.contains(e.target)) catNav.classList.remove('open');
+      });
+    }
   };
 
   HS.cookieBar = function () {
@@ -354,6 +373,18 @@
     fetch('/data/categories.json').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
       .then(function (cats) {
         HS.categories = cats;
+        var drop = HS.q('#nav-drop');
+        if (drop && Array.isArray(cats) && cats.length) {
+          var l1 = cats.filter(function (c) { return c.level === 1; }).slice(0, 12);
+          drop.innerHTML = l1.map(function (c) {
+            var kids = cats.filter(function (k) { return k.parent === c.id && k.level === 2; }).slice(0, 8);
+            return '<div class="g-group"><a class="g" href="/catalog?slug=' + encodeURIComponent(c.slug) + '">' + HS.esc(c.name) + '</a>' +
+              kids.map(function (k) {
+                return '<a href="/catalog?slug=' + encodeURIComponent(k.slug) + '">' + HS.esc(k.name) +
+                  '<span class="n">' + (k.count || 0) + '</span></a>';
+              }).join('') + '</div>';
+          }).join('');
+        }
         document.dispatchEvent(new CustomEvent('hs:cats', { detail: cats }));
       });
   };

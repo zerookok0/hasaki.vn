@@ -356,6 +356,26 @@ function blockProduct(p) {
   };
 }
 
+/* 源站链接 → 站内路径（快捷入口按各自类目落地） */
+const catSlugSet = new Set(catOut.map((c) => c.slug));
+const catNameMap = new Map(catOut.map((c) => [c.name, c.slug]));
+function mapUrl(u, title) {
+  const s = String(u || '');
+  if (/\/hard\/all_cate/.test(s)) return '/catalog';
+  if (/\/campaign\//.test(s)) return '/deals';
+  if (/hang-moi-ve/.test(s)) return '/catalog?sort=new';
+  if (/hotro\.hasaki\.vn/.test(s)) return '/policy?slug=support';
+  if (/\/booking/.test(s)) return '/policy?slug=clinic';
+  const m = s.match(/\/danh-muc\/(.+)-c\d+\.html/);
+  if (m && catSlugSet.has(m[1])) return '/catalog?slug=' + encodeURIComponent(m[1]);
+  if (title && catNameMap.has(title)) return '/catalog?slug=' + encodeURIComponent(catNameMap.get(title));
+  if (m) {
+    const kw = String(title || m[1].replace(/-/g, ' ')).split(/[&/|]/)[0].trim();
+    return '/search?q=' + encodeURIComponent(kw);
+  }
+  return '/catalog';
+}
+
 const bannerBlock = blockOf('SlideBanner');
 const shortcutBlock = blockOf('Shortcut');
 const dealsBlock = blockOf('ProductHorizontalListScroll');
@@ -368,7 +388,7 @@ const home = {
     name: b.name || '', img: b.image || '', url: toInternal(b.url, 0),
   })),
   shortcuts: ((shortcutBlock && shortcutBlock.data.shortcuts) || []).map((s) => ({
-    title: s.title || '', img: s.image || '', url: toInternal(s.url, 0),
+    title: s.title || '', img: s.image || '', url: mapUrl(s.url, s.title),
   })),
   dealsTitle: (dealsBlock && dealsBlock.data.title) || 'DEALS ĐANG DIỄN RA',
   dealsUrl: '/deals',
@@ -384,7 +404,8 @@ const home = {
   })),
   brandsTitle: (brandBlock && brandBlock.data.title) || 'THƯƠNG HIỆU NỔI BẬT',
   brands: ((brandBlock && brandBlock.data.brands) || []).map((b) => ({
-    name: b.name || '', img: b.image_150_75 || b.image_140_70 || b.image || b.cover || '',
+    name: b.name || '',
+    img: b.image || b.cover_220 || b.cover_170 || b.image_150_75 || '',
     url: '/search?q=' + encodeURIComponent(b.name || ''),
   })),
   catsTitle: (catBlock && catBlock.data.title) || 'DANH MỤC NGÀNH HÀNG',

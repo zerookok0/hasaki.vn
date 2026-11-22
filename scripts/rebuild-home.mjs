@@ -15,6 +15,28 @@ const salePrice = (m) => (Number(m) > 0 ? Math.round((Number(m) * DISCOUNT) / 10
 const load = (p, fb) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return fb; } };
 
 const cats = load(path.join(DATA, 'categories.json'), []);
+const catSlugs = new Set(cats.map((c) => c.slug));
+const catByName = new Map(cats.map((c) => [c.name, c.slug]));
+
+/* 源站链接 → 站内路径（快捷入口按各自类目落地，不再全部指向 /catalog） */
+function mapUrl(u, title) {
+  const s = String(u || '');
+  if (/\/hard\/all_cate/.test(s)) return '/catalog';
+  if (/\/campaign\//.test(s)) return '/deals';
+  if (/hang-moi-ve/.test(s)) return '/catalog?sort=new';
+  if (/hotro\.hasaki\.vn/.test(s)) return '/policy?slug=support';
+  if (/\/booking/.test(s)) return '/policy?slug=clinic';
+  const m = s.match(/\/danh-muc\/(.+)-c\d+\.html/);
+  if (m && catSlugs.has(m[1])) return '/catalog?slug=' + encodeURIComponent(m[1]);
+  /* 源站 slug 与我们的类目名不一致时，按标题对齐 */
+  if (title && catByName.has(title)) return '/catalog?slug=' + encodeURIComponent(catByName.get(title));
+  if (m) {
+    /* 类目缺失时用标题首词搜索（"Balo & Túi Xách" → "Balo"），保证点进去有结果 */
+    const kw = String(title || m[1].replace(/-/g, ' ')).split(/[&/|]/)[0].trim();
+    return '/search?q=' + encodeURIComponent(kw);
+  }
+  return '/catalog';
+}
 const BLOCK = load(path.join(RAW, 'home-block-desktop.json'), { data: { blocks: [] } });
 const DEALAPI = load(path.join(RAW, 'home-deals.json'), { data: { deal_products: [] } });
 const blocks = (BLOCK.data && BLOCK.data.blocks) || [];
@@ -45,7 +67,7 @@ const catB = blockOf('CategoryListScroll');
 
 const home = {
   banners: ((bannerB && bannerB.data.banners) || []).map((b) => ({ name: b.name || '', img: b.image || '', url: '/deals' })),
-  shortcuts: ((shortcutB && shortcutB.data.shortcuts) || []).map((s) => ({ title: s.title || '', img: s.image || '', url: '/catalog' })),
+  shortcuts: ((shortcutB && shortcutB.data.shortcuts) || []).map((s) => ({ title: s.title || '', img: s.image || '', url: mapUrl(s.url, s.title) })),
   dealsTitle: (dealsB && dealsB.data.title) || 'DEALS ĐANG DIỄN RA',
   dealsUrl: '/deals',
   deals: ((dealsB && dealsB.data.products) || []).map(blockProduct),
@@ -61,7 +83,9 @@ const home = {
   })),
   brandsTitle: (brandB && brandB.data.title) || 'THƯƠNG HIỆU NỔI BẬT',
   brands: ((brandB && brandB.data.brands) || []).map((b) => ({
-    name: b.name || '', img: b.image_150_75 || b.image_140_70 || b.image || b.cover || '',
+    name: b.name || '',
+    /* 用原图（500×500）而不是 150×75 的缩略图，避免放大后糊 */
+    img: b.image || b.cover_220 || b.cover_170 || b.image_150_75 || '',
     url: '/search?q=' + encodeURIComponent(b.name || ''),
   })),
   catsTitle: (catB && catB.data.title) || 'DANH MỤC NGÀNH HÀNG',

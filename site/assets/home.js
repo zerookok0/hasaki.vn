@@ -136,7 +136,7 @@
       '<div class="search-grid">' + items.map(function (s) {
         return '<div class="search-card"><div class="sc-head"><b>' + esc(s.title) + '</b><span>' + esc(s.sub) + '</span></div>' +
           '<div class="sc-imgs">' + (s.images || []).slice(0, 3).map(function (u, i) {
-            return '<a href="' + esc((s.urls && s.urls[i]) || s.url) + '"><img loading="lazy" src="' + esc(u) + '" alt=""></a>';
+            return '<a href="' + esc((s.urls && s.urls[i]) || s.url) + '"><img src="' + esc(u) + '" alt=""></a>';
           }).join('') + '</div>' +
           '<a class="sc-more" href="' + esc(s.url) + '">Xem tất cả &rsaquo;</a></div>';
       }).join('') + '</div>';
@@ -152,7 +152,7 @@
       '<a class="more" href="/brands">Xem tất cả</a></div>' +
       '<div class="brand-grid">' + items.map(function (b) {
         return '<a class="brand-tile" href="' + esc(b.url) + '" title="' + esc(b.name) + '">' +
-          '<img loading="lazy" src="' + esc(b.img) + '" alt="' + esc(b.name) + '"></a>';
+          '<img src="' + esc(b.img) + '" alt="' + esc(b.name) + '"></a>';
       }).join('') + '</div>';
   }
 
@@ -165,7 +165,7 @@
     el.innerHTML = '<div class="section-head"><div class="section-title">' + esc(d.catsTitle) + '</div>' +
       '<a class="more" href="/catalog">Xem tất cả</a></div>' +
       '<div class="tile-grid">' + items.map(function (c) {
-        return '<a class="tile" href="' + esc(c.url) + '"><i><img loading="lazy" src="' + esc(c.img) + '" alt=""></i><span>' + esc(c.name) + '</span></a>';
+        return '<a class="tile" href="' + esc(c.url) + '"><i><img src="' + esc(c.img) + '" alt=""></i><span>' + esc(c.name) + '</span></a>';
       }).join('') + '</div>';
   }
 

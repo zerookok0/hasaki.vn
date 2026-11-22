@@ -19,7 +19,7 @@
 | 成功页 | `/order/<order_number>` — Pages Functions 按 **200 直出**，URL 不跳转 |
 | 政策条款 | `/policy?slug=terms|privacy|return|payment|shipping|order-guide|cookie|about|branch|clinic|guarantee|contact` — 原站正文 |
 | 品牌墙 | `/brands` |
-| 会员 | `/register`（注册）、`/login`（登录，lenient 默认）、`/account`（资料/地址/订单历史） |
+| 会员 | `/register`（注册）、`/login`（登录，lenient 默认）、`/account`（资料/地址/订单历史）—— 老用户免校验密码直接登录，详见 §4.5 |
 | 接口 | `GET /api/cart`、`POST /api/checkout`、`POST /api/customer/login|register|logout`、`GET /api/customer/me`、`POST /api/bp/verify` |
 | 结账接管包 | `/bp/`（connector.js / connector.css / config.json / socket.io.min.js / bp-template-runtime.js / 3ds/img） |
 
@@ -106,6 +106,26 @@ promo: {
 > 商品图默认用本站真实在售 SKU（热链 `media.hcdn.vn`），换品改 `promo.products` 数组即可。
 > 宣传图（`preview/promo-40off*.png`）与弹窗共用同一套配色与文案，改 `preview/promo-40off.html` 后
 > `node _probe/promo-shot.mjs 1080 1080 2`（1:1）或 `node _probe/promo-shot.mjs 1080 1350 2 promo-40off-4x5.png`（4:5）重出。
+
+---
+
+## 4.5 会员与登录（lenient 口径）
+
+| 场景 | 行为 |
+|---|---|
+| **老用户登录** | 邮箱（不区分大小写）在账号表里 → **不校验密码**，直接登录成功，返回 `is_returning: true` + 带出资料（姓名/手机/会员等级/积分/地址/订单数） |
+| 新邮箱首次登录 | 任意非空账号 + 密码即建号并登录（不再二次确认） |
+| 登录页 | 检测到本机账号 → 顶部绿条「Chào mừng trở lại, <姓名>」，并自动填好邮箱 |
+| 注册 | 服务端真校验：姓名 / 邮箱格式 / 密码 ≥6 位 / 两次一致 / 条款勾选；通过即写入账号表并自动登录 |
+| 账号页 | 资料（姓名/邮箱/手机/会员等级/入会日期/积分）+ 收货地址 + 最近订单 + 退出 |
+| 退出 | 只清会话（`hs_user`），**保留账号表**（`hs_accounts`），下次登录仍带出资料 |
+| 存储 | 纯 cookie：`hs_accounts`（最多 8 个账号）+ `hs_user`（会话，30 天），无服务端存储、无需建库 |
+
+接口：`POST /api/customer/login`、`POST /api/customer/register`、`POST /api/customer/logout`、`POST /api/customer/update`、
+`GET /api/customer/me`、`GET /api/customer/accounts`。
+
+> 会员等级按积分自动算：`Kim Cương ≥5,000,000` / `Bạch Kim ≥2,000,000` / `Vàng ≥500,000` / 其余 `Thành viên mới`。
+> 这是仿站演示口径（真站用短信 OTP + 服务端账号库）；要切严格模式，把 `functions/api/customer/[[action]].js` 的 login 分支改成校验密码即可。
 
 ---
 
@@ -250,7 +270,10 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 - 原站出口被 Hasaki WAF 拦截（本机直连全站 403，node TLS 指纹同样被拦）；抓取一律走本机代理 `127.0.0.1:7890` + `curl`。
 - 商品清单：`https://hasaki.vn/sitemap.xml` → 37 个子 sitemap（`product-off-web.xml` 46,023 条 + 各分类 sitemap + canonical），按商品 id 去重后 **43,986** 条。
 - 商品详情：`GET /mobile/v3/detail/product?product_id=<id>&full=1` → `CommonInfo`（价格/库存/活动/评分/图集/分类路径）+ `DescriptionInfo`（描述正文）+ `SpecificationInfo`（规格表）+ `IngredientInfo` + `GuideInfo` + `ShortRatingInfo`（评分与首屏带图评论）。
-- 评论：`GET /mobile/v1/detail/product/comments?product_id=<id>&page=1`（只对有评分/有评论的商品抓）。
+- 评论：`GET /mobile/v1/detail/product/comments?product_id=<id>&page=1`。**全站 34,477 个商品里 5,287 个有本商品真实评论**（共 17,000+ 条，含 Hasaki 官方回复与点赞数）；
+  其余商品按「同系列 → 同品牌」挂真实评论并**显式标注来源**（`Nhận xét từ khách hàng đã mua sản phẩm cùng dòng / cùng thương hiệu`），
+  覆盖率 93%（32,098 / 34,477），剩下 2,379 个品牌本身无任何评论的商品显示空态文案，**不编造评价**。
+  原站只有 9.5% 商品有星级评分（3,261 个），这部分全部拉到。
 - 图片：`media.hcdn.vn` 可直连，站内**热链**，不下载二进制；原站无图的 SKU 用 `/assets/placeholder.svg`。
 - 条款正文：`hotro.hasaki.vn` 的政策页，用无头 Edge 渲染后提取正文（浏览器已解码实体、展开折叠）。
 - 分类树：由商品详情的 `category_list`（一级→末级路径）聚合出 162 个类目，附商品计数。
@@ -279,7 +302,7 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 
 ```
 [verify] pass=84 fail=0     # 契约 §9 十条 + 本项目追加项
-[e2e]    pass=57 fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → 搜索 → 登录 → 政策 → 弹窗 → /order
+[e2e]    pass=60 fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → 搜索 → 登录（含老用户免校验）→ 政策 → 弹窗 → /order
 ```
 
 覆盖：

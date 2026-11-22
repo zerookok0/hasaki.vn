@@ -73,6 +73,62 @@ const dir = path.join(RAW, 'detail');
 const files = fs.readdirSync(dir).filter((f) => /^\d+\.json$/.test(f));
 console.log('detail files:', files.length);
 
+/* ---------- 预加载真实评论（raw/reviews） ---------- */
+const revMap = new Map();      // id -> {total, items, bars}
+const revDir = path.join(RAW, 'reviews');
+if (fs.existsSync(revDir)) {
+  for (const f of fs.readdirSync(revDir)) {
+    if (!f.endsWith('.json')) continue;
+    const id = Number(f.replace('.json', ''));
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(revDir, f), 'utf8'));
+      if (j && Array.isArray(j.items) && j.items.length) {
+        const bars = [5, 4, 3, 2, 1].map((star) => ({ star, count: j.items.filter((i) => Number(i.star) === star).length }));
+        revMap.set(id, { total: j.total || j.items.length, items: j.items, bars: bars.some((b) => b.count) ? bars : null });
+      }
+    } catch (e) {}
+  }
+}
+console.log('products with real reviews:', revMap.size);
+
+/* 品牌 → 有评论的商品（按评论数降序），用于「同品牌真实评价」兜底
+ * 品牌/名称从上一版 data/index.json 取（避免重复解析 8,631 个大 JSON） */
+const idBrand = new Map();
+const idName = new Map();
+try {
+  const prev = JSON.parse(fs.readFileSync(path.join(DATA, 'index.json'), 'utf8'));
+  for (const r of prev.rows || []) { idBrand.set(r[0], r[2] || ''); idName.set(r[0], r[1] || ''); }
+} catch (e) { /* 首次运行时没有 index.json，退回只按名称前缀匹配 */ }
+const brandRevIndex = new Map();
+for (const [id, rv] of revMap) {
+  const bn = idBrand.get(id) || '';
+  if (!bn) continue;
+  if (!brandRevIndex.has(bn)) brandRevIndex.set(bn, []);
+  brandRevIndex.get(bn).push({ id, name: idName.get(id) || '', total: rv.total || 0 });
+}
+for (const [k, v] of brandRevIndex) v.sort((a, b) => b.total - a.total);
+
+/* 前缀索引：品牌 + 名称前 18 字符 → 评论数最多的同系列商品（O(1) 命中） */
+const prefixIndex = new Map();
+for (const [bn, list] of brandRevIndex) {
+  for (const c of list) {
+    const key = bn + '|' + String(c.name || '').toLowerCase().slice(0, 18);
+    const cur = prefixIndex.get(key);
+    if (!cur || c.total > cur.total) prefixIndex.set(key, c);
+  }
+}
+
+/* 同系列匹配：同品牌 + 名称前 18 字符一致 */
+function seriesReviews(product) {
+  if (!product || !product.brand) return null;
+  const key = product.brand.name + '|' + String(product.name || '').toLowerCase().slice(0, 18);
+  const hit = prefixIndex.get(key);
+  if (!hit || hit.id === product.id) return null;
+  return hit;
+}
+
+let seriesMatched = 0, brandMatched = 0;
+
 const catTree = new Map(); // id -> {id,name,parent,level,count}
 const brandMap = new Map(); // name -> {name,image,count}
 const buckets = new Map(); // bucket -> {}
@@ -114,20 +170,33 @@ for (const f of files) {
     brandMap.set(bname, b);
   }
 
-  // 评论：优先用评论接口，缺失时回落到详情里自带的首屏评论
+  /* 评论：本商品真实评论 → 详情自带首屏评价 → 同系列真实评论 → 同品牌真实评论 */
   let rv = null;
-  try {
-    const rf = path.join(RAW, 'reviews', f);
-    if (fs.existsSync(rf)) rv = JSON.parse(fs.readFileSync(rf, 'utf8'));
-  } catch (e) {}
-  if ((!rv || !Array.isArray(rv.items) || !rv.items.length) && Array.isArray(p.reviews) && p.reviews.length) {
+  let rvSource = '';
+  const own = revMap.get(p.id);
+  if (own && own.items.length) { rv = own; rvSource = 'product'; }
+  if (!rv && Array.isArray(p.reviews) && p.reviews.length) {
+    const bars = [5, 4, 3, 2, 1].map((star) => ({ star, count: p.reviews.filter((i) => Number(i.star) === star).length }));
     rv = {
       total: (p.rating_short && p.rating_short.total) || p.reviews.length,
       items: p.reviews.map((r) => ({
         id: 0, content: r.content, like: 0, at: r.at, user: r.user,
         root: false, star: r.star, replies: r.reply ? [{ user: 'Hasaki', content: r.reply }] : [], imgs: r.imgs || [],
       })),
+      bars: bars.some((b) => b.count) ? bars : null,
     };
+    rvSource = 'product';
+  }
+  if (!rv) {
+    const s = seriesReviews({ id: p.id, brand: p.brand, name: p.name });
+    const src = s && revMap.get(s.id);
+    if (src) { rv = { ...src, from: s.name }; rvSource = 'series'; seriesMatched++; }
+  }
+  if (!rv) {
+    const list = brandRevIndex.get((p.brand && p.brand.name) || '') || [];
+    const c = list.find((x) => x.id !== p.id);
+    const src = c && revMap.get(c.id);
+    if (src) { rv = { ...src, from: c.name }; rvSource = 'brand'; brandMatched++; }
   }
 
   const rating = p.rating || { avg: 0, total: 0 };
@@ -144,10 +213,10 @@ for (const f of files) {
     now_free: !!p.now_free, announce: p.announce || '',
     gallery: (p.gallery || []).slice(0, 8), cats,
     promo: p.promo || '', promos: p.promos || [], badge: p.badge || null,
-    desc: sanitizeHtml(p.desc || '').slice(0, 24000),
+    desc: sanitizeHtml((p.desc || '').slice(0, 30000)).slice(0, 24000),
     spec: (p.spec || []).slice(0, 40).map((r) => [decodeEntities(r[0]), decodeEntities(r[1])]),
-    ingr: sanitizeHtml(p.ingr || '').slice(0, 10000),
-    guide: sanitizeHtml(p.guide || '').slice(0, 6000),
+    ingr: sanitizeHtml((p.ingr || '').slice(0, 12000)).slice(0, 10000),
+    guide: sanitizeHtml((p.guide || '').slice(0, 8000)).slice(0, 6000),
     reviews: (p.reviews || []).map((r) => ({
       content: r.content || '', user: r.user || '', star: r.star || 5, at: r.at || 0, reply: r.reply || '', imgs: r.imgs || [],
     })),
@@ -157,11 +226,14 @@ for (const f of files) {
   if (!buckets.has(bk)) buckets.set(bk, {});
   buckets.get(bk)[String(p.id)] = detail;
 
-  if (rv && (rv.items || []).length) {
+  if (rv && Array.isArray(rv.items) && rv.items.length) {
     if (!rvBuckets.has(bk)) rvBuckets.set(bk, {});
     rvBuckets.get(bk)[String(p.id)] = {
-      total: rv.total || (rv.items || []).length,
-      items: rv.items.slice(0, 6),
+      total: rv.total || rv.items.length,
+      bars: rv.bars || null,
+      source: rvSource,
+      from: rv.from || '',
+      items: rv.items.slice(0, 8),
     };
   }
 
@@ -179,6 +251,7 @@ for (const f of files) {
 }
 
 console.log('valid', processed, 'dead', dead, 'categories', catTree.size, 'brands', brandMap.size);
+console.log('reviews: own', revMap.size, '| series-matched', seriesMatched, '| brand-matched', brandMatched);
 
 /* ---------- index.json ---------- */
 fs.writeFileSync(path.join(DATA, 'index.json'), JSON.stringify({ v: 1, currency: 'VND', discount: DISCOUNT, rows: indexRows }));

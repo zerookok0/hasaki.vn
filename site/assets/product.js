@@ -6,6 +6,12 @@
   var P = null;
   var qty = 1;
   var activeImg = 0;
+  var currentTab = 'desc';
+
+  function activateTab(name) {
+    HS.qa('.pd-tabs .tabbar button').forEach(function (x) { x.classList.toggle('on', x.dataset.tab === name); });
+    HS.qa('.pd-tabs .tabbody').forEach(function (x) { x.classList.toggle('hidden', x.dataset.body !== name); });
+  }
 
   function money(n) { return HS.money(n); }
 
@@ -108,17 +114,27 @@
   function reviewHTML(p, bars) {
     var r = p.reviews || { total: 0, items: [] };
     var avg = (p.rating && p.rating.avg) || 0;
-    var rows = bars || [5, 4, 3, 2, 1].map(function (s, i) { return { star: 5 - i, count: 0 }; });
+    var total = r.total || (r.items || []).length || 0;
+    var hasBars = Array.isArray(bars) && bars.some(function (b) { return b.count > 0; });
+    var rows = hasBars ? bars : [];
     var max = rows.reduce(function (m, x) { return Math.max(m, x.count); }, 1);
-    return '<div class="review-sum"><div class="avg"><b>' + avg + '</b><div class="stars">' +
-      '&#9733;'.repeat(Math.round(avg)) + '</div><div style="font-size:12px;color:#777">' + (r.total || 0) + ' đánh giá</div></div>' +
-      '<div>' + rows.map(function (x) {
+    var sourceNote = '';
+    if (r.source === 'series') {
+      sourceNote = '<div class="rv-source">Nhận xét từ khách hàng đã mua sản phẩm cùng dòng' + (r.from ? ' — <b>' + HS.esc(r.from) + '</b>' : '') + '</div>';
+    } else if (r.source === 'brand') {
+      sourceNote = '<div class="rv-source">Nhận xét từ khách hàng đã mua sản phẩm cùng thương hiệu' + (r.from ? ' — <b>' + HS.esc(r.from) + '</b>' : '') + '</div>';
+    }
+    return sourceNote + '<div class="review-sum"><div class="avg"><b>' + (avg || '—') + '</b><div class="stars">' +
+      (avg ? '&#9733;'.repeat(Math.round(avg)) : '') + '</div><div style="font-size:12px;color:#777">' + total + ' đánh giá</div></div>' +
+      (hasBars ? '<div>' + rows.map(function (x) {
         return '<div class="bar-row"><span>' + x.star + ' sao</span><span class="bar"><i style="width:' + Math.round(x.count / max * 100) + '%"></i></span><span>' + x.count + '</span></div>';
-      }).join('') + '</div></div>' +
+      }).join('') + '</div>'
+        : (total > 0 ? '' : '<div style="font-size:12.5px;color:#777;line-height:1.7">Sản phẩm này chưa có đánh giá bằng sao. Hãy là người đầu tiên chia sẻ cảm nhận sau khi mua hàng tại Hasaki.</div>')) +
+      '</div>' +
       '<div style="margin-top:12px">' + (r.items || []).map(function (c) {
-        var st = Number(c.star) || 5;
+        var st = Number(c.star) || 0;
         return '<div class="review-item"><div class="who"><b>' + HS.esc(c.user || 'Khách hàng') + '</b>' +
-          '<span class="stars">' + '&#9733;'.repeat(st) + '</span>' +
+          (st ? '<span class="stars">' + '&#9733;'.repeat(st) + '</span>' : '') +
           '<span>' + (c.at ? new Date(c.at * 1000).toLocaleDateString('vi-VN') : '') + '</span>' +
           (c.like ? '<span>' + c.like + ' thích</span>' : '') + '</div>' +
           '<div class="txt">' + HS.esc(c.content) + '</div>' +
@@ -211,8 +227,8 @@
     var tabbar = HS.q('.pd-tabs .tabbar');
     if (tabbar) tabbar.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
-      HS.qa('.pd-tabs .tabbar button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      HS.qa('.pd-tabs .tabbody').forEach(function (x) { x.classList.toggle('hidden', x.dataset.body !== b.dataset.tab); });
+      currentTab = b.dataset.tab;
+      activateTab(currentTab);
     });
 
     /* FLASH DEAL 倒计时 */
@@ -249,6 +265,7 @@
     var crumb = HS.q('#crumb'); if (crumb) crumb.innerHTML = crumbHTML(P);
     root.innerHTML = '<div class="pd-top">' + galleryHTML(P) + asideHTML(P) + '</div>' + tabsHTML(P);
     bind(P);
+    activateTab(currentTab);
     document.title = P.name + ' | Hasaki.vn';
     HS.pixel.viewContent({ id: P.id, name: P.name, cat: P.cat_name, sale: P.sale, market_price: P.market_price });
   }

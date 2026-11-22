@@ -299,6 +299,11 @@ p { margin: 0; }
 .review-item .who b { color: var(--text); }
 .review-item .txt { margin-top: 6px; font-size: 13.5px; line-height: 1.6; }
 .rv-imgs { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.rv-source {
+  margin-bottom: 10px; padding: 7px 12px; border-radius: 6px;
+  background: var(--green-050); color: var(--green-700); font-size: 12px; line-height: 1.5;
+  border-left: 3px solid var(--green);
+}
 .rv-imgs img { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
 .rich { font-size: 13.8px; line-height: 1.75; color: var(--text-2); }
 .rich h3 { font-size: 15px; color: var(--text); margin: 14px 0 8px; }

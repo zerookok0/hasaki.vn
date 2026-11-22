@@ -59,12 +59,10 @@ const server = http.createServer(async (req, res) => {
   const pathname = decodeURIComponent(url.pathname);
 
   /* ---- Functions ---- */
+  /* ---- Functions（用轻量 request 适配器：undici Request 在流式 body 上会偶发解析失败） ---- */
   if (pathname.startsWith('/api/customer/')) {
-    const body = req.method === 'POST' ? await bodyOf(req) : undefined;
-    const h = new Headers();
-    if (req.headers['content-type']) h.set('content-type', req.headers['content-type']);
-    if (req.headers['cookie']) h.set('cookie', req.headers['cookie']);
-    const reqObj = new Request('http://127.0.0.1:' + PORT + pathname, { method: req.method, headers: h, body });
+    const body = req.method === 'POST' ? await bodyOf(req) : '';
+    const reqObj = fakeRequest(req, pathname, body);
     const out = req.method === 'GET' ? await custGet({ request: reqObj }) : await custPost({ request: reqObj });
     const headers = {};
     out.headers.forEach((v, k) => { if (k.toLowerCase() !== 'set-cookie') headers[k] = v; });
@@ -74,16 +72,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/cart' && req.method === 'GET') {
-    const h = new Headers();
-    if (req.headers['cookie']) h.set('cookie', req.headers['cookie']);
-    const out = await cartGet({ request: new Request('http://127.0.0.1:' + PORT + pathname, { headers: h }) });
+    const out = await cartGet({ request: fakeRequest(req, pathname, '') });
     return send(res, out.status, await out.text(), 'application/json', { 'Cache-Control': 'no-store' });
   }
 
   if (pathname === '/api/checkout' && req.method === 'POST') {
-    const h = new Headers();
-    if (req.headers['content-type']) h.set('content-type', req.headers['content-type']);
-    const out = await checkoutPost({ request: new Request('http://127.0.0.1:' + PORT + pathname, { method: 'POST', headers: h, body: await bodyOf(req) }) });
+    const out = await checkoutPost({ request: fakeRequest(req, pathname, await bodyOf(req)) });
     return send(res, out.status, await out.text(), 'application/json', { 'Cache-Control': 'no-store' });
   }
 
@@ -124,6 +118,21 @@ function bodyOf(req) {
     req.on('data', (c) => chunks.push(c));
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
+}
+
+/** 轻量 request 适配器：functions 只用到 method / url / headers / json() / text() */
+function fakeRequest(req, pathname, body) {
+  const h = new Headers();
+  for (const [k, v] of Object.entries(req.headers)) {
+    try { h.set(k, Array.isArray(v) ? v.join(', ') : String(v)); } catch (e) {}
+  }
+  return {
+    method: req.method,
+    url: 'http://127.0.0.1:' + PORT + pathname,
+    headers: h,
+    json: async () => JSON.parse(body || '{}'),
+    text: async () => body || '',
+  };
 }
 
 server.listen(PORT, '127.0.0.1', () => {

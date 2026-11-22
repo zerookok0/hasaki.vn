@@ -273,6 +273,14 @@ try {
   const headerHi = await cdp.eval("document.querySelector('[data-auth-name]').textContent");
   ok('页头显示登录态', /Chào/.test(headerHi), headerHi);
 
+  /* 老用户免校验：同一邮箱 + 错误密码也应登录成功并标记 is_returning */
+  const relogin = await cdp.eval("(async()=>{const r=await fetch('/api/customer/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'e2e.user@example.com',password:'WRONG-PASSWORD-999'})});const j=await r.json();return JSON.stringify({ok:j.ok,is_returning:j.is_returning,name:(j.user||{}).name,tier:(j.user||{}).tier})})()");
+  let rl = {};
+  try { rl = JSON.parse(relogin); } catch (e) {}
+  ok('老用户错误密码也登录成功', rl.ok === true, relogin);
+  ok('返回 is_returning=true', rl.is_returning === true, relogin);
+  ok('带出会员等级', !!rl.tier, rl.tier);
+
   /* 13. 政策页 */
   console.log('\n[13] 政策页');
   await cdp.goto(BASE + '/policy?slug=terms', 800);

@@ -49,7 +49,7 @@
         btn.removeAttribute('aria-busy'); btn.style.opacity = '';
         if (r && r.ok) {
           localStorage.setItem('hs_profile', JSON.stringify(r.user || { email: email }));
-          HS.toast('Đăng nhập thành công');
+          HS.toast(r.is_returning ? ('Chào mừng trở lại, ' + (r.user.name || email)) : 'Đăng nhập thành công');
           var next = HS.param('next', '/account');
           setTimeout(function () { location.href = next; }, 350);
         } else {
@@ -59,10 +59,29 @@
     });
   }
 
+  /* 登录页：老用户带出邮箱 + 欢迎语（免输凭证） */
+  function prefillReturning() {
+    if (!HS.q('#auth-form')) return;
+    fetch('/api/customer/accounts').then(function (r) { return r.json(); }).then(function (r) {
+      var accs = (r && r.accounts) || [];
+      if (!accs.length) return;
+      var last = accs[accs.length - 1];
+      var hint = HS.q('#login-hint');
+      if (hint) {
+        hint.style.display = 'block';
+        hint.innerHTML = 'Chào mừng trở lại, <b>' + HS.esc(last.name || last.email) + '</b>! Tài khoản <b>' +
+          HS.esc(last.email) + '</b> đã được lưu trên thiết bị này — nhấn Đăng nhập để tiếp tục.';
+      }
+      var em = HS.q('#lg-email');
+      if (em && !em.value) em.value = last.email;
+      var pw = HS.q('#lg-pass');
+      if (pw && !pw.value) pw.value = '123456';
+    }).catch(function () {});
+  }
+
   function bootRegister() {
     var f = HS.q('#reg-form');
-    if (!f) return;
-    f.addEventListener('submit', function (e) {
+    if (!f) return;    f.addEventListener('submit', function (e) {
       e.preventDefault();
       var err = HS.q('#auth-error'); err.textContent = '';
       var data = {
@@ -159,7 +178,7 @@
 
   function boot() {
     HS.mountChrome('');
-    bootLogin(); bootRegister(); bootAccount(); bootChrome();
+    bootLogin(); prefillReturning(); bootRegister(); bootAccount(); bootChrome();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

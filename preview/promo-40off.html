@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hasaki promo 40% off</title>
+<style>
+  @page { size: 1080px 1080px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    background: #b4091a;
+    -webkit-font-smoothing: antialiased;
+  }
+  .canvas {
+    position: relative; width: 1080px; height: 1080px; overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #ff5a1f 0%, #e21a1a 38%, #b4091a 68%, #8c0614 100%);
+  }
+  /* 光晕与放射线 */
+  .glow { position: absolute; width: 1500px; height: 1500px; left: -210px; top: -520px;
+    background: radial-gradient(closest-side, rgba(255,214,0,.55), rgba(255,120,0,.18) 55%, transparent 72%);
+    filter: blur(2px); }
+  .rays { position: absolute; inset: -20% -20% auto -20%; height: 900px; opacity: .35;
+    background: repeating-conic-gradient(from 0deg at 50% 30%, rgba(255,255,255,.16) 0deg 3deg, transparent 3deg 12deg);
+    mask-image: radial-gradient(closest-side at 50% 30%, #000 42%, transparent 76%);
+    -webkit-mask-image: radial-gradient(closest-side at 50% 30%, #000 42%, transparent 76%); }
+  .dots { position: absolute; inset: 0; opacity: .18;
+    background-image: radial-gradient(#fff 1.6px, transparent 1.6px); background-size: 26px 26px;
+    mask-image: linear-gradient(180deg, #000 0%, transparent 46%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 46%); }
+
+  /* 顶部品牌条 */
+  .top { position: absolute; left: 40px; right: 40px; top: 30px; display: flex; align-items: center; gap: 18px; z-index: 6; }
+  .logo { height: 58px; width: auto; filter: drop-shadow(0 3px 6px rgba(90,0,0,.35)); }
+  .top-txt { color: #fff; font-size: 23px; font-weight: 700; font-style: italic; line-height: 1.15;
+    text-shadow: 0 2px 6px rgba(120,0,0,.45); }
+  .top-txt small { display: block; font-style: normal; font-weight: 400; font-size: 17px; opacity: .92; margin-top: 2px; }
+  .close { position: absolute; right: 18px; top: 6px; width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(0,0,0,.28); color: #fff; font-size: 28px; line-height: 44px; text-align: center; font-weight: 400; }
+
+  /* 斜置缎带 */
+  .ribbon { position: absolute; left: -40px; top: 118px; z-index: 7;
+    background: linear-gradient(180deg, #ffdf3d 0%, #ffb300 100%);
+    color: #b4091a; font-weight: 900; font-size: 44px; letter-spacing: .5px;
+    padding: 12px 74px 12px 62px; transform: rotate(-3.2deg); transform-origin: left center;
+    box-shadow: 0 10px 24px rgba(90,0,0,.35);
+    clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%); }
+
+  /* 大折扣字 */
+  .off-wrap { position: absolute; left: 44px; top: 210px; z-index: 8; transform: rotate(-2.4deg); }
+  .off {
+    font-size: 318px; font-weight: 900; line-height: .82; letter-spacing: -12px;
+    background: linear-gradient(180deg, #fff45c 0%, #ffd400 42%, #ffab00 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 12px #c0000f;
+    paint-order: stroke fill;
+    filter: drop-shadow(0 12px 0 #8c0614) drop-shadow(0 20px 26px rgba(60,0,0,.45));
+  }
+  .off .pct { font-size: 176px; letter-spacing: 0; margin-left: 6px; }
+  .off-sub {
+    display: inline-block; margin-top: -14px; margin-left: 6px;
+    background: #fff; color: #d0021b; font-weight: 900; font-size: 58px; letter-spacing: 2px;
+    padding: 6px 22px; border-radius: 12px; transform: rotate(-2deg);
+    box-shadow: 0 8px 18px rgba(90,0,0,.35);
+  }
+
+  /* 商品拼贴 */
+  .goods { position: absolute; right: -10px; top: 168px; width: 470px; height: 600px; z-index: 5; }
+  .goods .g { position: absolute; border-radius: 18px; overflow: hidden; background: #fff;
+    box-shadow: 0 18px 34px rgba(70,0,0,.38); border: 4px solid #fff; }
+  .goods .g img { width: 100%; height: 100%; object-fit: contain; display: block; background: #fff; }
+  .g1 { width: 250px; height: 300px; right: 168px; top: 0; transform: rotate(-7deg); }
+  .g2 { width: 215px; height: 252px; right: -6px; top: 96px; transform: rotate(6deg); }
+  .g3 { width: 208px; height: 220px; right: 150px; top: 262px; transform: rotate(-3deg); }
+  .stamp { position: absolute; right: 10px; top: 356px; width: 118px; height: 118px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff6a00, #d0021b 70%); color: #fff; z-index: 6;
+    display: grid; place-items: center; text-align: center; font-weight: 900; font-size: 15px; line-height: 1.1;
+    box-shadow: 0 10px 22px rgba(90,0,0,.45); transform: rotate(10deg); }
+  .stamp b { display: block; font-size: 28px; }
+
+  /* 黄色缎带（第二段） */
+  .ribbon2 { position: absolute; left: 46px; top: 596px; z-index: 9; transform: rotate(-2deg);
+    background: linear-gradient(180deg, #ffe45c 0%, #ffc400 100%);
+    color: #a8000e; font-weight: 900; font-size: 40px; padding: 12px 40px;
+    border-radius: 8px; box-shadow: 0 12px 26px rgba(90,0,0,.4); }
+
+  /* 信任标 */
+  .trust { position: absolute; left: 0; right: 0; top: 700px; z-index: 8;
+    display: flex; justify-content: space-between; gap: 10px; padding: 0 34px; }
+  .t { flex: 1; display: flex; align-items: center; gap: 10px; justify-content: center;
+    color: #fff; font-size: 21px; font-weight: 700; line-height: 1.15; }
+  .t i { width: 46px; height: 46px; border-radius: 50%; background: #fff; color: #d0021b;
+    display: grid; place-items: center; font-style: normal; font-size: 22px; flex: 0 0 auto;
+    box-shadow: 0 6px 14px rgba(90,0,0,.3); }
+
+  /* 底部白色区 */
+  .bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #fff; z-index: 10;
+    border-radius: 26px 26px 0 0; box-shadow: 0 -12px 30px rgba(60,0,0,.25);
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20px; }
+  .b-label { color: #7a7a7a; font-size: 27px; font-weight: 700; letter-spacing: .3px; }
+  .clock { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .clock b {
+    font-size: 88px; font-weight: 900; color: #d0021b; font-variant-numeric: tabular-nums;
+    text-shadow: 0 6px 0 rgba(208,2,27,.12); line-height: 1; }
+  .clock s { text-decoration: none; font-size: 62px; font-weight: 900; color: #d0021b; opacity: .8; }
+  .cta { margin-top: 16px; width: 940px; height: 92px; border-radius: 14px;
+    background: linear-gradient(180deg, #e8102a 0%, #b4091a 100%);
+    color: #fff; font-size: 38px; font-weight: 900; letter-spacing: .5px;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    box-shadow: 0 12px 26px rgba(180,9,26,.42); }
+  .cta span { font-size: 40px; }
+  .foot-note { margin-top: 10px; font-size: 17px; color: #9a9a9a; }
+  .foot-note b { color: #d0021b; }
+</style>
+</head>
+<body>
+<div class="canvas">
+  <div class="glow"></div>
+  <div class="rays"></div>
+  <div class="dots"></div>
+
+  <div class="top">
+    <img class="logo" src="file:///F:/agent/落地页/越南hasaki美妆/site/assets/logo-hasaki.png" alt="Hasaki">
+    <div class="top-txt">Mỹ phẩm chính hãng<small>Giao nhanh 2H · 352 cửa hàng</small></div>
+    <div class="close">×</div>
+  </div>
+
+  <div class="ribbon">Ưu Đãi Đặc Biệt</div>
+
+  <div class="off-wrap">
+    <div class="off">40<span class="pct">%</span></div>
+    <div class="off-sub">OFF</div>
+  </div>
+
+  <div class="goods">
+    <div class="g g1"><img src="https://media.hcdn.vn/catalog/product/s/o/son-li-mem-moi-mau-cam-mor08-orange-obsession-3-9g08_1_.jpg" alt=""></div>
+    <div class="g g2"><img src="https://media.hcdn.vn/catalog/product/g/o/google-shopping-sua-rua-mat-fixderma-khong-tao-bot-cho-da-nhay-cam-60g-1646379724.jpg" alt=""></div>
+    <div class="g g3"><img src="https://media.hcdn.vn/catalog/product/g/o/google-shopping-kem-duong-martiderm-tai-tao-phuc-hoi-da-nhay-cam-2ml-1646818101.jpg" alt=""></div>
+    <div class="stamp">CHỈ CÒN<b>1 GIỜ</b></div>
+  </div>
+
+  <div class="ribbon2">Sắm ngay hôm nay!</div>
+
+  <div class="trust">
+    <div class="t"><i>✓</i>Hàng<br>chính hãng</div>
+    <div class="t"><i>2H</i>Giao hàng<br>nhanh chóng</div>
+    <div class="t"><i>☎</i>Hỗ trợ<br>tận tâm</div>
+  </div>
+
+  <div class="bottom">
+    <div class="b-label">Chương trình kết thúc sau</div>
+    <div class="clock"><b>01</b><s>:</s><b>00</b><s>:</s><b>00</b></div>
+    <div class="cta">Mua ngay <span>→</span></div>
+    <div class="foot-note">Áp dụng cho toàn bộ sản phẩm · <b>Miễn phí giao 2H</b> · Đổi trả 30 ngày</div>
+  </div>
+</div>
+</body>
+</html>

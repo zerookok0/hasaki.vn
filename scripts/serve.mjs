@@ -60,28 +60,30 @@ const server = http.createServer(async (req, res) => {
 
   /* ---- Functions ---- */
   if (pathname.startsWith('/api/customer/')) {
-    const action = pathname.slice('/api/customer/'.length);
-    const reqObj = new Request(url, {
-      method: req.method, headers: req.headers,
-      body: req.method === 'POST' ? await bodyOf(req) : undefined,
-    });
+    const body = req.method === 'POST' ? await bodyOf(req) : undefined;
+    const h = new Headers();
+    if (req.headers['content-type']) h.set('content-type', req.headers['content-type']);
+    if (req.headers['cookie']) h.set('cookie', req.headers['cookie']);
+    const reqObj = new Request('http://127.0.0.1:' + PORT + pathname, { method: req.method, headers: h, body });
     const out = req.method === 'GET' ? await custGet({ request: reqObj }) : await custPost({ request: reqObj });
     const headers = {};
-    out.headers.forEach((v, k) => {
-      if (k.toLowerCase() === 'set-cookie') {
-        headers['Set-Cookie'] = headers['Set-Cookie'] ? [].concat(headers['Set-Cookie'], v) : v;
-      } else headers[k] = v;
-    });
+    out.headers.forEach((v, k) => { if (k.toLowerCase() !== 'set-cookie') headers[k] = v; });
+    const cookies = typeof out.headers.getSetCookie === 'function' ? out.headers.getSetCookie() : [];
+    if (cookies.length) headers['Set-Cookie'] = cookies.length === 1 ? cookies[0] : cookies;
     return send(res, out.status, await out.text(), headers['Content-Type'] || 'application/json', headers);
   }
 
   if (pathname === '/api/cart' && req.method === 'GET') {
-    const out = await cartGet({ request: new Request(url, { headers: req.headers }) });
+    const h = new Headers();
+    if (req.headers['cookie']) h.set('cookie', req.headers['cookie']);
+    const out = await cartGet({ request: new Request('http://127.0.0.1:' + PORT + pathname, { headers: h }) });
     return send(res, out.status, await out.text(), 'application/json', { 'Cache-Control': 'no-store' });
   }
 
   if (pathname === '/api/checkout' && req.method === 'POST') {
-    const out = await checkoutPost({ request: new Request(url, { method: 'POST', headers: req.headers, body: await bodyOf(req) }) });
+    const h = new Headers();
+    if (req.headers['content-type']) h.set('content-type', req.headers['content-type']);
+    const out = await checkoutPost({ request: new Request('http://127.0.0.1:' + PORT + pathname, { method: 'POST', headers: h, body: await bodyOf(req) }) });
     return send(res, out.status, await out.text(), 'application/json', { 'Cache-Control': 'no-store' });
   }
 

@@ -367,6 +367,135 @@ p { margin: 0; }
 .skel { background: linear-gradient(90deg, #eee, #f5f5f5, #eee); background-size: 200% 100%; animation: sk 1.2s infinite; border-radius: 6px; }
 @keyframes sk { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+/* ---------- 促销弹窗（站点绿主色） ---------- */
+.hs-promo-mask {
+  position: fixed; inset: 0; z-index: 1500; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(15, 34, 25, 0.55); backdrop-filter: blur(2px);
+  opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility .22s;
+}
+.hs-promo-mask.on { opacity: 1; visibility: visible; }
+.hs-promo {
+  position: relative; width: min(94vw, 880px); max-height: calc(100dvh - 32px); overflow: hidden;
+  min-height: 452px;
+  border-radius: 18px; background: linear-gradient(158deg, #3c8161 0%, #306e51 42%, #24503c 100%);
+  box-shadow: 0 24px 70px rgba(8, 30, 20, .45);
+  display: grid; grid-template-columns: 1fr 380px;
+  transform: translateY(8px) scale(.985); transition: transform .22s ease;
+}
+.hs-promo-mask.on .hs-promo { transform: none; }
+.hs-promo::before {
+  content: ""; position: absolute; width: 720px; height: 720px; left: -240px; top: -380px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 214, 0, .5), rgba(255, 106, 0, .16) 58%, transparent 74%);
+}
+.hs-promo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .16;
+  background-image: radial-gradient(#fff 1.4px, transparent 1.4px); background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 52%); -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 52%);
+}
+.hs-promo-close {
+  position: absolute; right: 12px; top: 12px; z-index: 5; width: 34px; height: 34px; border-radius: 50%;
+  border: 0; background: rgba(0, 0, 0, .22); color: #fff; font-size: 20px; line-height: 1; display: grid; place-items: center;
+}
+.hs-promo-close:hover { background: rgba(0, 0, 0, .36); }
+.hs-promo-l { position: relative; z-index: 2; padding: 20px 22px 22px; display: flex; flex-direction: column; min-height: 0; }
+.hs-promo-brand { display: flex; align-items: center; gap: 10px; }
+.hs-promo-brand img { height: 34px; width: auto; }
+.hs-promo-brand div { color: #fff; font-size: 12.5px; font-weight: 700; font-style: italic; line-height: 1.2; text-shadow: 0 2px 6px rgba(0, 40, 20, .35); }
+.hs-promo-brand span { display: block; font-style: normal; font-weight: 400; font-size: 11px; opacity: .92; margin-top: 2px; }
+.hs-promo-ribbon {
+  align-self: flex-start; margin: 14px 0 4px; padding: 6px 18px; border-radius: 6px;
+  background: linear-gradient(180deg, #ffe45c, #ffc400); color: #24503c;
+  font-size: 14px; font-weight: 900; letter-spacing: .3px; transform: rotate(-1.6deg);
+  box-shadow: 0 8px 18px rgba(8, 40, 25, .3);
+}
+.hs-promo-off {
+  margin: 2px 0 0; font-size: clamp(96px, 19vw, 148px); font-weight: 900; line-height: .82; letter-spacing: -4px;
+  background: linear-gradient(180deg, #fff45c 0%, #ffd400 45%, #ffab00 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 6px #1b3d2d; paint-order: stroke fill;
+  filter: drop-shadow(0 6px 0 #17362a) drop-shadow(0 12px 18px rgba(8, 30, 20, .4));
+}
+.hs-promo-off small { font-size: .56em; letter-spacing: 0; margin-left: 4px; }
+.hs-promo-offoff {
+  align-self: flex-start; margin-top: -6px; padding: 4px 14px; border-radius: 6px; background: #fff; color: #d0021b;
+  font-weight: 900; font-size: 22px; letter-spacing: 1px; transform: rotate(-2deg); box-shadow: 0 6px 14px rgba(8, 30, 20, .25);
+}
+.hs-promo-ribbon2 {
+  align-self: flex-start; margin-top: 12px; padding: 7px 16px; border-radius: 6px;
+  background: linear-gradient(180deg, #ffe45c, #ffc400); color: #24503c; font-weight: 900; font-size: 15px;
+  transform: rotate(-1.5deg); box-shadow: 0 8px 18px rgba(8, 40, 25, .28);
+}
+.hs-promo-trust { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.hs-promo-trust div { display: flex; align-items: center; gap: 6px; color: #eaf3ee; font-size: 11.5px; font-weight: 600; }
+.hs-promo-trust i {
+  width: 22px; height: 22px; border-radius: 50%; background: #fff; color: #306e51; display: grid; place-items: center;
+  font-style: normal; font-size: 11px; font-weight: 800;
+}
+.hs-promo-r { position: relative; z-index: 2; padding: 22px 20px 20px 6px; display: flex; flex-direction: column; min-height: 0; }
+.hs-promo-goods { position: relative; height: 232px; flex: 0 0 auto; margin-bottom: 6px; }
+.hs-promo-goods .g {
+  position: absolute; width: 132px; height: 152px; border-radius: 12px; overflow: hidden; background: #fff;
+  border: 3px solid #fff; box-shadow: 0 10px 22px rgba(8, 30, 20, .34);
+}
+.hs-promo-goods .g img { width: 100%; height: 100%; object-fit: contain; }
+.hs-promo-goods .g1 { right: 112px; top: 0; transform: rotate(-7deg); }
+.hs-promo-goods .g2 { right: 8px; top: 34px; transform: rotate(6deg); }
+.hs-promo-goods .g3 { right: 104px; top: 112px; width: 118px; height: 130px; transform: rotate(-3deg); }
+.hs-promo-stamp {
+  position: absolute; right: 6px; top: 132px; width: 78px; height: 78px; border-radius: 50%; z-index: 3;
+  background: radial-gradient(circle at 35% 30%, #ff8a3d, #ff6a00 55%, #e85f00 100%); color: #fff;
+  display: grid; place-items: center; text-align: center; font-size: 9.5px; font-weight: 900; line-height: 1.1;
+  box-shadow: 0 8px 18px rgba(8, 30, 20, .34); transform: rotate(10deg);
+}
+.hs-promo-stamp b { display: block; font-size: 17px; }
+.hs-promo-clockbox { background: #fff; border-radius: 12px; padding: 10px 12px; text-align: center; box-shadow: 0 10px 24px rgba(8, 30, 20, .22); }
+.hs-promo-clockbox .lbl { font-size: 11px; color: #777; font-weight: 700; }
+.hs-promo-clock { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 2px; }
+.hs-promo-clock b { font-size: clamp(26px, 5vw, 34px); font-weight: 900; color: #d0021b; font-variant-numeric: tabular-nums; line-height: 1; }
+.hs-promo-clock s { text-decoration: none; font-size: 22px; font-weight: 900; color: #d0021b; opacity: .75; }
+.hs-promo-cta {
+  margin-top: 10px; width: 100%; height: 48px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #ff8a3d 0%, #ff6a00 100%); color: #fff;
+  font-size: 16px; font-weight: 900; letter-spacing: .3px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 10px 22px rgba(255, 106, 0, .4);
+}
+.hs-promo-cta:hover { filter: brightness(1.04); }
+.hs-promo-note { margin-top: 6px; font-size: 10.5px; color: #cfe0d6; text-align: center; }
+.hs-promo-note b { color: #fff; }
+@media (max-width: 860px) {
+  .hs-promo {
+    grid-template-columns: 1fr; width: min(94vw, 420px);
+    max-height: calc(100dvh - 20px); min-height: 0; overflow-y: auto; align-content: start;
+  }
+  .hs-promo-l { padding: 14px 16px 6px; }
+  .hs-promo-r { padding: 0 16px 14px; }
+  .hs-promo-goods { height: 178px; margin: 4px 0 10px; }
+  .hs-promo-goods .g { width: 92px; height: 108px; }
+  .hs-promo-goods .g1 { right: 78px; top: 0; }
+  .hs-promo-goods .g2 { right: 0; top: 22px; }
+  .hs-promo-goods .g3 { right: 66px; top: 76px; width: 84px; height: 96px; }
+  .hs-promo-stamp { right: 0; top: 102px; width: 62px; height: 62px; font-size: 8px; }
+  .hs-promo-stamp b { font-size: 13px; }
+  .hs-promo-ribbon { margin: 10px 0 2px; font-size: 12.5px; padding: 5px 14px; }
+  .hs-promo-off { font-size: clamp(74px, 24vw, 104px); -webkit-text-stroke-width: 5px; }
+  .hs-promo-offoff { font-size: 18px; padding: 3px 11px; }
+  .hs-promo-ribbon2 { margin-top: 8px; font-size: 13px; padding: 5px 12px; }
+  .hs-promo-trust { gap: 8px; margin-top: 10px; }
+  .hs-promo-trust div { font-size: 10px; }
+  .hs-promo-trust i { width: 18px; height: 18px; font-size: 9px; }
+  .hs-promo-clockbox { padding: 8px 10px; }
+  .hs-promo-cta { height: 44px; font-size: 15px; margin-top: 8px; }
+  .hs-promo-note { font-size: 10px; margin-top: 5px; }
+}
+@media (max-height: 640px) and (min-width: 861px) {
+  .hs-promo { max-height: calc(100dvh - 20px); }
+  .hs-promo-off { font-size: 112px; }
+  .hs-promo-goods { min-height: 170px; }
+  .hs-promo-goods .g { width: 112px; height: 128px; }
+  .hs-promo-goods .g3 { top: 104px; }
+  .hs-promo-stamp { top: 140px; }
+}
+
 /* ---------- 响应式 ---------- */
 [data-toggle-side] { display: none; }
 @media (max-width: 1280px) {

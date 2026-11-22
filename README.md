@@ -37,7 +37,9 @@
 | 成功页 | `preview/order.png` |
 | 登录 / 注册 / 账号 | `preview/login.png`、`preview/register.png`、`preview/account.png` |
 | 政策页 | `preview/policy.png` |
-| 移动端首页 | `preview/mobile-home.png` |
+| 移动端 | `preview/mobile-home.png`、`preview/mobile-product.png`、`preview/mobile-checkout.png`、`preview/mobile-catalog.png` |
+| 促销弹窗（桌面 / 手机） | `preview/promo-modal-desktop.png`、`preview/promo-modal-mobile.png` |
+| 促销宣传图（1:1 / 4:5） | `preview/promo-40off.png`（2160×2160）、`preview/promo-40off-4x5.png`（2160×2700） |
 
 ---
 
@@ -73,7 +75,41 @@
 
 ---
 
-## 4. 结账契约落地对照（《建站结账页契约》v1.0）
+## 4. 促销弹窗（Promo modal）
+
+站点绿主色（`#306E51 → #24503C` 渐变）+ 橙色 CTA（`#FF6A00`）+ 黄色强调（`#FFD400`），与全站色板一致。
+
+| 项 | 说明 |
+|---|---|
+| 触发 | 首页 / 分类 / 搜索 / 商品页加载后 1.2s 弹出（`HS.config.promo.pages` 可改） |
+| 版式 | 桌面：左右两栏卡片 `min(94vw, 880px)`；≤860px：单栏竖排 `min(94vw, 420px)`，字号 `clamp()` 连续缩放 |
+| 倒计时 | `durationHours` 默认 1 小时，`HH:MM:SS`；结束时间写 `sessionStorage.hs_promo_end`（同会话内不重置） |
+| 关闭记忆 | 关闭后写 `localStorage.hs_promo_closed_at`，`ttlHours` 默认 6 小时内不再弹 |
+| 层级 | `z-index: 1500` —— **低于** `/bp` 验证屏的 `2147483000`，不会挡住 3DS 弹层 |
+| CTA | 默认跳 `/deals`（`HS.config.promo.ctaHref`） |
+| 调试 | 控制台 `HS.promo.reset()` 清记忆、`HS.promo.show()` 手动弹 |
+
+配置在 `site/assets/app.js` 顶部 `HS.config.promo`：
+
+```js
+promo: {
+  enabled: true,
+  delayMs: 1200,        // 延迟弹出
+  ttlHours: 6,          // 关闭后多久不再弹
+  durationHours: 1,     // 倒计时时长
+  pages: ['home', 'category', 'search', 'product'],
+  ctaHref: '/deals',
+  ctaText: 'Mua ngay',
+}
+```
+
+> 商品图默认用本站真实在售 SKU（热链 `media.hcdn.vn`），换品改 `promo.products` 数组即可。
+> 宣传图（`preview/promo-40off*.png`）与弹窗共用同一套配色与文案，改 `preview/promo-40off.html` 后
+> `node _probe/promo-shot.mjs 1080 1080 2`（1:1）或 `node _probe/promo-shot.mjs 1080 1350 2 promo-40off-4x5.png`（4:5）重出。
+
+---
+
+## 5. 结账契约落地对照（《建站结账页契约》v1.0）
 
 | 契约条目 | 实现位置 |
 |---|---|
@@ -99,7 +135,7 @@
 
 ---
 
-## 5. 目录结构
+## 6. 目录结构
 
 ```
 .
@@ -145,7 +181,7 @@
 
 ---
 
-## 6. 常用命令
+## 7. 常用命令
 
 ```bash
 node scripts/build.mjs     # 生成 dist/（Pages 的 Build command 就是这个；npm run build 等价）
@@ -162,7 +198,7 @@ node scripts/fetch-policy-render.mjs  # 抓政策页正文
 
 ---
 
-## 7. 部署到 Cloudflare Pages
+## 8. 部署到 Cloudflare Pages
 
 ### 先推到 GitHub
 
@@ -209,7 +245,7 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 
 ---
 
-## 8. 数据来源与抓取口径
+## 9. 数据来源与抓取口径
 
 - 原站出口被 Hasaki WAF 拦截（本机直连全站 403，node TLS 指纹同样被拦）；抓取一律走本机代理 `127.0.0.1:7890` + `curl`。
 - 商品清单：`https://hasaki.vn/sitemap.xml` → 37 个子 sitemap（`product-off-web.xml` 46,023 条 + 各分类 sitemap + canonical），按商品 id 去重后 **43,986** 条。
@@ -226,7 +262,7 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 
 ---
 
-## 9. 已知取舍
+## 10. 已知取舍
 
 | 项 | 现状 |
 |---|---|
@@ -239,11 +275,11 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 
 ---
 
-## 10. 自检记录
+## 11. 自检记录
 
 ```
-[verify] pass=83 fail=0     # 契约 §9 十条 + 本项目追加项
-[e2e]    pass=44 fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → 搜索 → 登录 → 政策 → /order
+[verify] pass=84 fail=0     # 契约 §9 十条 + 本项目追加项
+[e2e]    pass=57 fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → 搜索 → 登录 → 政策 → 弹窗 → /order
 ```
 
 覆盖：

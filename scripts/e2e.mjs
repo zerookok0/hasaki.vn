@@ -73,6 +73,15 @@ async function newPage(url) {
   return j.webSocketDebuggerUrl;
 }
 
+async function waitFor(fn, ms = 20000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    try { if (await fn()) return true; } catch (e) {}
+    await sleep(250);
+  }
+  return false;
+}
+
 /* ---------------- 主流程 ---------------- */
 const edge = spawn(EDGE, [
   '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
@@ -94,6 +103,12 @@ try {
   await cdp.connect();
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
+  /* 关键：禁用 HTTP 缓存，避免 assets/* 的 immutable 缓存命中旧 CSS/JS */
+  await cdp.send('Network.enable');
+  await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+  /* 清掉上次残留的购物车 / 弹窗记忆 */
+  await cdp.goto(BASE + '/');
+  await cdp.eval("(function(){try{localStorage.clear();sessionStorage.clear();}catch(e){}})()");
 
   /* 1. 首页 */
   console.log('\n[1] 首页');
@@ -108,9 +123,14 @@ try {
 
   /* 2. 商品页 */
   console.log('\n[2] 商品页');
-  const pid = await cdp.eval("(async()=>{const r=await fetch('/data/index.json');const j=await r.json();const row=j.rows.find(x=>x[5]&&x[8]>0)||j.rows.find(x=>x[5])||j.rows[0];return row[0];})()");
-  await cdp.goto(BASE + '/product?id=' + pid);
-  await sleep(1200);
+  const pid = await cdp.eval("(async()=>{const r=await fetch('/data/index.json');const j=await r.json();const row=j.rows.find(x=>x[5])||j.rows[0];return row[0];})()");
+  await cdp.goto(BASE + '/product?id=' + pid, 800);
+  /* 商品页要等 data 分片 + 推荐位（index 7.4MB）加载完 */
+  for (let i = 0; i < 60; i++) {
+    await sleep(300);
+    if (await cdp.eval("!!document.querySelector('.pd-title')")) break;
+  }
+  await sleep(600);
   const title = await cdp.eval("document.querySelector('.pd-title') ? document.querySelector('.pd-title').textContent : ''");
   ok('商品标题渲染', !!title, title.slice(0, 40));
   const nowPrice = await cdp.eval("document.querySelector('.pd-price .now') ? document.querySelector('.pd-price .now').textContent : ''");
@@ -210,8 +230,8 @@ try {
 
   /* 10. 搜索 */
   console.log('\n[10] 搜索');
-  await cdp.goto(BASE + '/search?q=son');
-  await sleep(1500);
+  await cdp.goto(BASE + '/search?q=son', 600);
+  await waitFor(async () => (await cdp.eval("document.querySelectorAll('#cat-grid .card').length")) > 0, 25000);
   const searchCards = await cdp.eval("document.querySelectorAll('#cat-grid .card').length");
   ok('搜索 son 有结果', searchCards > 0, 'cards=' + searchCards);
   const searchTitle = await cdp.eval("document.querySelector('.cat-title').textContent");
@@ -221,37 +241,42 @@ try {
 
   /* 11. 分类筛选 */
   console.log('\n[11] 分类页');
-  await cdp.goto(BASE + '/catalog');
-  await sleep(1800);
+  await cdp.goto(BASE + '/catalog', 600);
+  await waitFor(async () => (await cdp.eval("document.querySelectorAll('#cat-grid .card').length")) > 0, 30000);
   const catCards = await cdp.eval("document.querySelectorAll('#cat-grid .card').length");
   ok('分类页首屏 40 条', catCards > 0 && catCards <= 40, 'cards=' + catCards);
   const sideCats = await cdp.eval("document.querySelectorAll('#side .side-cat a').length");
   ok('侧栏分类树渲染', sideCats > 5, 'links=' + sideCats);
   const priceSort = await cdp.eval("(function(){var b=document.querySelector('[data-sort=\"asc\"]');if(!b)return null;b.click();return true})()");
   ok('排序 tab 可点击', priceSort === true);
-  await sleep(900);
+  await waitFor(async () => {
+    const p = await cdp.eval("(function(){return [].slice.call(document.querySelectorAll('#cat-grid .price-now')).slice(0,5).map(function(e){return parseInt(e.textContent.replace(/[^0-9]/g,''),10)})})()");
+    return p.length > 1 && p.every((v, i, a) => i === 0 || a[i - 1] <= v);
+  }, 15000);
   const prices = await cdp.eval("(function(){return [].slice.call(document.querySelectorAll('#cat-grid .price-now')).slice(0,5).map(function(e){return parseInt(e.textContent.replace(/[^0-9]/g,''),10)})})()");
   const ascOk = prices.length > 1 && prices.every((v, i, a) => i === 0 || a[i - 1] <= v);
   ok('价格升序生效', ascOk, JSON.stringify(prices));
 
   /* 12. 登录 / 账号 */
   console.log('\n[12] 会员');
-  await cdp.goto(BASE + '/login');
-  await sleep(800);
+  await cdp.goto(BASE + '/login', 600);
+  await waitFor(async () => !!(await cdp.eval("document.getElementById('lg-email')")), 15000);
   await cdp.eval("(function(){document.getElementById('lg-email').value='e2e.user@example.com';document.getElementById('lg-pass').value='secret123';})()");
   await cdp.eval("document.querySelector('#auth-form button[type=submit]').click()");
-  await sleep(1500);
+  await waitFor(async () => (await cdp.eval('location.pathname')) === '/account', 15000);
   const afterLogin = await cdp.eval("location.pathname");
   ok('登录后进入账号页', afterLogin === '/account', afterLogin);
+  await waitFor(async () => /@/.test(await cdp.eval("(document.querySelector('#acc-profile')||{}).textContent||''")), 15000);
   const accName = await cdp.eval("document.querySelector('#acc-profile') ? document.querySelector('#acc-profile').textContent : ''");
   ok('账号页显示资料', /e2e\.user@example\.com/.test(accName), accName.slice(0, 60));
+  await sleep(400);
   const headerHi = await cdp.eval("document.querySelector('[data-auth-name]').textContent");
   ok('页头显示登录态', /Chào/.test(headerHi), headerHi);
 
   /* 13. 政策页 */
   console.log('\n[13] 政策页');
-  await cdp.goto(BASE + '/policy?slug=terms');
-  await sleep(1200);
+  await cdp.goto(BASE + '/policy?slug=terms', 800);
+  await waitFor(async () => (await cdp.eval("document.getElementById('pol-body').textContent.length")) > 2000, 20000);
   const polLen = await cdp.eval("document.getElementById('pol-body').textContent.length");
   ok('条款正文渲染', polLen > 2000, 'len=' + polLen);
   const polNav = await cdp.eval("document.querySelectorAll('#pol-nav a').length");
@@ -260,16 +285,48 @@ try {
   /* 14. 移动端 375 */
   console.log('\n[14] 移动端 375');
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 812, deviceScaleFactor: 2, mobile: true });
+  for (const [label, path] of [
+    ['首页', '/'], ['分类页', '/catalog'], ['搜索页', '/search?q=son'],
+    ['商品页', '/product?id=' + pid], ['购物车', '/cart'], ['结账页', '/checkout'],
+    ['政策页', '/policy?slug=terms'], ['登录页', '/login'],
+  ]) {
+    await cdp.goto(BASE + path);
+    await sleep(1400);
+    const noOverflow = await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1");
+    ok('375 无横向溢出 · ' + label, noOverflow === true,
+      'scrollW=' + (await cdp.eval('document.documentElement.scrollWidth')));
+  }
   await cdp.goto(BASE + '/checkout');
   await sleep(1200);
-  const mobileX = await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1");
-  ok('结账页无横向溢出（375）', mobileX === true);
   const cardVisible = await cdp.eval("(function(){const el=document.getElementById('bp-card-number');const r=el.getBoundingClientRect();return r.width>0&&r.top>=0&&r.top<window.innerHeight*3})()");
   ok('卡号输入框在首屏附近', cardVisible === true);
+
+  /* 15. 促销弹窗（桌面 + 移动双端） */
+  console.log('\n[15] 促销弹窗');
   await cdp.goto(BASE + '/');
-  await sleep(1500);
-  const mHomeX = await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1");
-  ok('首页无横向溢出（375）', mHomeX === true);
+  await sleep(300);
+  await cdp.eval("(function(){try{HS.promo.reset()}catch(e){}})()");
+  await cdp.goto(BASE + '/');
+  let popup = false;
+  for (let i = 0; i < 30; i++) { await sleep(200); if (await cdp.eval("!!document.getElementById('hs-promo-mask')")) { popup = true; break; } }
+  ok('首页自动弹出', popup === true);
+  const popupInfo = await cdp.eval("(function(){var el=document.querySelector('.hs-promo');if(!el)return '{}';var r=el.getBoundingClientRect();return JSON.stringify({w:Math.round(r.width),h:Math.round(r.height),inView:r.top>=0&&r.bottom<=innerHeight+2,clock:(document.querySelector('[data-clock]')||{}).textContent})})()");
+  let pi = {};
+  try { pi = JSON.parse(popupInfo); } catch (e) {}
+  ok('弹窗在视口内（375）', !!pi.w && pi.inView === true, popupInfo);
+  ok('倒计时格式 HH:MM:SS', /^\d{2}:\d{2}:\d{2}$/.test((pi.clock || '').trim()), pi.clock);
+  const ctaText = await cdp.eval("(document.querySelector('[data-promo-cta]')||{}).textContent");
+  ok('CTA 存在', /Mua ngay/.test(ctaText || ''), ctaText);
+  await cdp.eval("document.querySelector('.hs-promo-close').click()");
+  await sleep(500);
+  const closed = await cdp.eval("!document.getElementById('hs-promo-mask')");
+  ok('关闭后移除', closed === true);
+  const remembered = await cdp.eval("(function(){try{return !!localStorage.getItem('hs_promo_closed_at')}catch(e){return false}})()");
+  ok('关闭记忆已写入', remembered === true);
+  await cdp.goto(BASE + '/');
+  await sleep(2200);
+  const notAgain = await cdp.eval("!document.getElementById('hs-promo-mask')");
+  ok('刷新后不再弹（ttl 内）', notAgain === true);
   await cdp.send('Emulation.clearDeviceMetricsOverride');
 } catch (e) {
   fail++;

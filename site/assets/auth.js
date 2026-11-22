@@ -100,6 +100,22 @@
     HS.auth.me().then(function (r) {
       var user = r && r.user;
       if (!user) {
+        /* cookie 会话丢了也允许用本地缓存兜底（同一浏览器内体验优先） */
+        try {
+          var p0 = JSON.parse(localStorage.getItem('hs_profile') || 'null');
+          if (p0 && (p0.email || p0.name)) {
+            user = {
+              id: 'HS' + String(p0.email || p0.name).length,
+              name: p0.name || String(p0.email || '').split('@')[0],
+              email: p0.email || '', phone: p0.phone || '',
+              membership: p0.membership || 'Thành viên mới',
+              joined_at: p0.joined_at || new Date().toLocaleDateString('vi-VN'),
+              points: p0.points || 0,
+            };
+          }
+        } catch (e) {}
+      }
+      if (!user) {
         location.replace('/login?next=/account');
         return;
       }

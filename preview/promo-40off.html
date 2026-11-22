@@ -9,13 +9,13 @@
   html, body { width: 1080px; height: 1080px; overflow: hidden; }
   body {
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-    background: #b4091a;
+    background: #24503c;
     -webkit-font-smoothing: antialiased;
   }
   .canvas {
     position: relative; width: 1080px; height: 1080px; overflow: hidden;
     background:
-      radial-gradient(120% 80% at 50% 0%, #ff5a1f 0%, #e21a1a 38%, #b4091a 68%, #8c0614 100%);
+      radial-gradient(120% 80% at 50% 0%, #3f8765 0%, #306e51 38%, #24503c 70%, #1a3a2b 100%);
   }
   /* 光晕与放射线 */
   .glow { position: absolute; width: 1500px; height: 1500px; left: -210px; top: -520px;
@@ -42,9 +42,9 @@
   /* 斜置缎带 */
   .ribbon { position: absolute; left: -40px; top: 118px; z-index: 7;
     background: linear-gradient(180deg, #ffdf3d 0%, #ffb300 100%);
-    color: #b4091a; font-weight: 900; font-size: 44px; letter-spacing: .5px;
+    color: #1b3d2d; font-weight: 900; font-size: 44px; letter-spacing: .5px;
     padding: 12px 74px 12px 62px; transform: rotate(-3.2deg); transform-origin: left center;
-    box-shadow: 0 10px 24px rgba(90,0,0,.35);
+    box-shadow: 0 10px 24px rgba(6, 30, 18, .4);
     clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%); }
 
   /* 大折扣字 */
@@ -53,9 +53,9 @@
     font-size: 318px; font-weight: 900; line-height: .82; letter-spacing: -12px;
     background: linear-gradient(180deg, #fff45c 0%, #ffd400 42%, #ffab00 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
-    -webkit-text-stroke: 12px #c0000f;
+    -webkit-text-stroke: 12px #16352a;
     paint-order: stroke fill;
-    filter: drop-shadow(0 12px 0 #8c0614) drop-shadow(0 20px 26px rgba(60,0,0,.45));
+    filter: drop-shadow(0 12px 0 #16352a) drop-shadow(0 20px 26px rgba(6, 26, 16, .5));
   }
   .off .pct { font-size: 176px; letter-spacing: 0; margin-left: 6px; }
   .off-sub {
@@ -74,25 +74,25 @@
   .g2 { width: 215px; height: 252px; right: -6px; top: 96px; transform: rotate(6deg); }
   .g3 { width: 208px; height: 220px; right: 150px; top: 262px; transform: rotate(-3deg); }
   .stamp { position: absolute; right: 10px; top: 356px; width: 118px; height: 118px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #ff6a00, #d0021b 70%); color: #fff; z-index: 6;
+    background: radial-gradient(circle at 35% 30%, #ff8a3d, #ff6a00 55%, #e85f00 100%); color: #fff; z-index: 6;
     display: grid; place-items: center; text-align: center; font-weight: 900; font-size: 15px; line-height: 1.1;
-    box-shadow: 0 10px 22px rgba(90,0,0,.45); transform: rotate(10deg); }
+    box-shadow: 0 10px 22px rgba(6, 30, 18, .45); transform: rotate(10deg); }
   .stamp b { display: block; font-size: 28px; }
 
   /* 黄色缎带（第二段） */
   .ribbon2 { position: absolute; left: 46px; top: 596px; z-index: 9; transform: rotate(-2deg);
     background: linear-gradient(180deg, #ffe45c 0%, #ffc400 100%);
-    color: #a8000e; font-weight: 900; font-size: 40px; padding: 12px 40px;
-    border-radius: 8px; box-shadow: 0 12px 26px rgba(90,0,0,.4); }
+    color: #1b3d2d; font-weight: 900; font-size: 40px; padding: 12px 40px;
+    border-radius: 8px; box-shadow: 0 12px 26px rgba(6, 30, 18, .45); }
 
   /* 信任标 */
   .trust { position: absolute; left: 0; right: 0; top: 700px; z-index: 8;
     display: flex; justify-content: space-between; gap: 10px; padding: 0 34px; }
   .t { flex: 1; display: flex; align-items: center; gap: 10px; justify-content: center;
     color: #fff; font-size: 21px; font-weight: 700; line-height: 1.15; }
-  .t i { width: 46px; height: 46px; border-radius: 50%; background: #fff; color: #d0021b;
+  .t i { width: 46px; height: 46px; border-radius: 50%; background: #fff; color: #306e51;
     display: grid; place-items: center; font-style: normal; font-size: 22px; flex: 0 0 auto;
-    box-shadow: 0 6px 14px rgba(90,0,0,.3); }
+    box-shadow: 0 6px 14px rgba(6, 30, 18, .3); }
 
   /* 底部白色区 */
   .bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background: #fff; z-index: 10;
@@ -105,13 +105,23 @@
     text-shadow: 0 6px 0 rgba(208,2,27,.12); line-height: 1; }
   .clock s { text-decoration: none; font-size: 62px; font-weight: 900; color: #d0021b; opacity: .8; }
   .cta { margin-top: 16px; width: 940px; height: 92px; border-radius: 14px;
-    background: linear-gradient(180deg, #e8102a 0%, #b4091a 100%);
+    background: linear-gradient(180deg, #ff8a3d 0%, #ff6a00 100%);
     color: #fff; font-size: 38px; font-weight: 900; letter-spacing: .5px;
     display: flex; align-items: center; justify-content: center; gap: 14px;
-    box-shadow: 0 12px 26px rgba(180,9,26,.42); }
+    box-shadow: 0 12px 26px rgba(255, 106, 0, .42); }
   .cta span { font-size: 40px; }
   .foot-note { margin-top: 10px; font-size: 17px; color: #9a9a9a; }
   .foot-note b { color: #d0021b; }
+
+  /* 4:5 竖版（视口高 ≥1200 时自动切换） */
+  @media (min-height: 1200px) {
+    html, body { height: 100vh; }
+    .canvas { height: 100vh; }
+    .bottom { height: 500px; padding-top: 0; justify-content: center; }
+    .clock b { font-size: 100px; }
+    .cta { height: 100px; font-size: 42px; margin-top: 26px; }
+    .foot-note { margin-top: 20px; font-size: 19px; }
+  }
 </style>
 </head>
 <body>

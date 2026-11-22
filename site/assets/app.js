@@ -12,6 +12,16 @@
     fbPixelId: '000000000000000', // ← 填 Facebook Pixel ID 即启用
     pixel: { pageView: true, viewContent: true, addToCart: true, initiateCheckout: true, purchase: true },
     purchaseDedupeHours: 24,
+    /* 促销弹窗（站点绿主色 + 1 小时倒计时）*/
+    promo: {
+      enabled: true,
+      delayMs: 1200,
+      ttlHours: 6,
+      durationHours: 1,
+      pages: ['home', 'category', 'search', 'product'],
+      ctaHref: '/deals',
+      ctaText: 'Mua ngay',
+    },
     freeShipFrom: 249000,
     lang: 'vi',
     phone: '1800 6324',

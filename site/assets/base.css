@@ -110,9 +110,9 @@ p { margin: 0; }
 .crumb a:hover { color: var(--green); }
 
 /* ---------- 首页区块 ---------- */
-.hero-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 300px; gap: 8px; }
+.hero-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 300px; gap: 8px; grid-auto-rows: 1fr; }
 .hero-tile { border-radius: var(--radius); overflow: hidden; background: #fff; }
-.hero-tile img { width: 100%; height: 100%; object-fit: cover; }
+.hero-tile img { width: 100%; height: 100%; min-height: 186px; object-fit: cover; }
 
 .quickbar { background: #fff; border-radius: var(--radius); display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; padding: 14px 8px; margin-top: 10px; }
 .quick { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; text-align: center; }
@@ -160,15 +160,15 @@ p { margin: 0; }
 /* ---------- 分类瓷片 ---------- */
 .tile-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px; padding: 12px; background: #fff; border-radius: var(--radius); }
 .tile { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.tile i { width: 100%; aspect-ratio: 1/1; border-radius: var(--radius); background: #fafafa; display: grid; place-items: center; overflow: hidden; }
-.tile img { width: 82%; height: 82%; object-fit: contain; }
+.tile i { width: 100%; aspect-ratio: 1/1; border-radius: var(--radius); background: #fff; border: 1px solid var(--line-2); display: grid; place-items: center; overflow: hidden; }
+.tile img { width: 78%; height: 78%; object-fit: contain; }
 .tile span { font-size: 12px; color: var(--text-2); text-align: center; line-height: 1.25; }
 .tile:hover span { color: var(--green); }
 
 /* ---------- 品牌墙 ---------- */
 .brand-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .brand-tile { background: #fff; border-radius: var(--radius); display: grid; place-items: center; padding: 14px; aspect-ratio: 16/9; }
-.brand-tile img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.brand-tile img { max-height: 62px; max-width: 100%; object-fit: contain; }
 
 /* ---------- 销售榜单 ---------- */
 .rank-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }

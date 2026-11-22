@@ -23,7 +23,7 @@
 | 接口 | `GET /api/cart`、`POST /api/checkout`、`POST /api/customer/login|register|logout`、`GET /api/customer/me`、`POST /api/bp/verify` |
 | 结账接管包 | `/bp/`（connector.js / connector.css / config.json / socket.io.min.js / bp-template-runtime.js / 3ds/img） |
 
-商品规模随抓取时点变化：当前入库 **43,000+ 在售商品**（原站 sitemap 全量），每个商品带原站图集（无图 SKU 用占位图，原站本身也没有图）。
+商品规模随抓取时点变化：当前入库 **34,477 件在售商品**（原站 sitemap 全量 43,986 条，剔除原站本身无价的 9,509 条），每个商品带原站图集（原站本身无图的 SKU 用占位图）。
 
 ## 预览
 
@@ -242,8 +242,8 @@ curl -s -X POST https://<站点>/api/checkout -H 'Content-Type: application/json
 ## 10. 自检记录
 
 ```
-[verify] pass=NN fail=0     # 契约 §9 十条 + 本项目追加项
-[e2e]    pass=NN fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → /order
+[verify] pass=83 fail=0     # 契约 §9 十条 + 本项目追加项
+[e2e]    pass=44 fail=0     # 真 Edge：首页 → 加购 → 购物车 → 结账 → 提交守卫 → Purchase → 搜索 → 登录 → 政策 → /order
 ```
 
 覆盖：

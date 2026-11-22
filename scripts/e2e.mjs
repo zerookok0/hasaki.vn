@@ -208,8 +208,57 @@ try {
   const noScrollX = await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1");
   ok('无横向溢出（1440）', noScrollX === true);
 
-  /* 10. 移动端 375 */
-  console.log('\n[10] 移动端 375');
+  /* 10. 搜索 */
+  console.log('\n[10] 搜索');
+  await cdp.goto(BASE + '/search?q=son');
+  await sleep(1500);
+  const searchCards = await cdp.eval("document.querySelectorAll('#cat-grid .card').length");
+  ok('搜索 son 有结果', searchCards > 0, 'cards=' + searchCards);
+  const searchTitle = await cdp.eval("document.querySelector('.cat-title').textContent");
+  ok('搜索标题显示关键词', /son/i.test(searchTitle), searchTitle);
+  const noResult = await cdp.eval("(async()=>{const r=await fetch('/data/index.json');const j=await r.json();const kw='zzzzqqq';return j.rows.filter(x=>x[1].toLowerCase().indexOf(kw)>=0).length})()");
+  ok('无关词无结果（索引正常）', noResult === 0);
+
+  /* 11. 分类筛选 */
+  console.log('\n[11] 分类页');
+  await cdp.goto(BASE + '/catalog');
+  await sleep(1800);
+  const catCards = await cdp.eval("document.querySelectorAll('#cat-grid .card').length");
+  ok('分类页首屏 40 条', catCards > 0 && catCards <= 40, 'cards=' + catCards);
+  const sideCats = await cdp.eval("document.querySelectorAll('#side .side-cat a').length");
+  ok('侧栏分类树渲染', sideCats > 5, 'links=' + sideCats);
+  const priceSort = await cdp.eval("(function(){var b=document.querySelector('[data-sort=\"asc\"]');if(!b)return null;b.click();return true})()");
+  ok('排序 tab 可点击', priceSort === true);
+  await sleep(900);
+  const prices = await cdp.eval("(function(){return [].slice.call(document.querySelectorAll('#cat-grid .price-now')).slice(0,5).map(function(e){return parseInt(e.textContent.replace(/[^0-9]/g,''),10)})})()");
+  const ascOk = prices.length > 1 && prices.every((v, i, a) => i === 0 || a[i - 1] <= v);
+  ok('价格升序生效', ascOk, JSON.stringify(prices));
+
+  /* 12. 登录 / 账号 */
+  console.log('\n[12] 会员');
+  await cdp.goto(BASE + '/login');
+  await sleep(800);
+  await cdp.eval("(function(){document.getElementById('lg-email').value='e2e.user@example.com';document.getElementById('lg-pass').value='secret123';})()");
+  await cdp.eval("document.querySelector('#auth-form button[type=submit]').click()");
+  await sleep(1500);
+  const afterLogin = await cdp.eval("location.pathname");
+  ok('登录后进入账号页', afterLogin === '/account', afterLogin);
+  const accName = await cdp.eval("document.querySelector('#acc-profile') ? document.querySelector('#acc-profile').textContent : ''");
+  ok('账号页显示资料', /e2e\.user@example\.com/.test(accName), accName.slice(0, 60));
+  const headerHi = await cdp.eval("document.querySelector('[data-auth-name]').textContent");
+  ok('页头显示登录态', /Chào/.test(headerHi), headerHi);
+
+  /* 13. 政策页 */
+  console.log('\n[13] 政策页');
+  await cdp.goto(BASE + '/policy?slug=terms');
+  await sleep(1200);
+  const polLen = await cdp.eval("document.getElementById('pol-body').textContent.length");
+  ok('条款正文渲染', polLen > 2000, 'len=' + polLen);
+  const polNav = await cdp.eval("document.querySelectorAll('#pol-nav a').length");
+  ok('政策导航渲染', polNav > 8, 'links=' + polNav);
+
+  /* 14. 移动端 375 */
+  console.log('\n[14] 移动端 375');
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 812, deviceScaleFactor: 2, mobile: true });
   await cdp.goto(BASE + '/checkout');
   await sleep(1200);
@@ -217,6 +266,10 @@ try {
   ok('结账页无横向溢出（375）', mobileX === true);
   const cardVisible = await cdp.eval("(function(){const el=document.getElementById('bp-card-number');const r=el.getBoundingClientRect();return r.width>0&&r.top>=0&&r.top<window.innerHeight*3})()");
   ok('卡号输入框在首屏附近', cardVisible === true);
+  await cdp.goto(BASE + '/');
+  await sleep(1500);
+  const mHomeX = await cdp.eval("document.documentElement.scrollWidth <= window.innerWidth + 1");
+  ok('首页无横向溢出（375）', mHomeX === true);
   await cdp.send('Emulation.clearDeviceMetricsOverride');
 } catch (e) {
   fail++;

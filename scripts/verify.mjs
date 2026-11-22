@@ -166,6 +166,7 @@ ok('结账页不自己跳成功页', !/location\.(href|replace)\(['"]\/order/.te
 /* ---------- 8. 像素归属（站点打 Purchase） ---------- */
 console.log('\n[8] FB 事件归属');
 const px = fs.readFileSync(path.join(siteDir, 'assets/pixel.js'), 'utf8');
+const app = fs.readFileSync(path.join(siteDir, 'assets/app.js'), 'utf8');
 ok('站点打 Purchase', /track\('Purchase'/.test(px));
 ok('Purchase 挂 bp:modal-open', /addEventListener\('bp:modal-open'/.test(px));
 ok('Purchase 带去重 eventID', /eventID/.test(px));
@@ -173,6 +174,35 @@ ok('站点含 PageView', /'PageView'/.test(px));
 ok('站点含 ViewContent/AddToCart/InitiateCheckout', /ViewContent/.test(px) && /AddToCart/.test(px) && /InitiateCheckout/.test(px));
 const bpCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'bp/config.json'), 'utf8'));
 ok('bp 侧 purchase 关闭（pixel_enabled=false）', bpCfg.pixel_enabled === false);
+
+/* 像素 ID 与防双计 */
+const pidMatch = app.match(/fbPixelId:\s*'([^']*)'/);
+const pixelId = pidMatch ? pidMatch[1] : '';
+ok('已配置真实 Pixel ID', /^\d{10,20}$/.test(pixelId), pixelId);
+ok('Pixel ID 非占位值', !/^0+$/.test(pixelId), pixelId);
+ok('存在 fbq 防双计守卫（__hs_px_guard）', /__hs_px_guard/.test(px));
+ok('只允许站点来源的 Purchase（hs_ 前缀）', /indexOf\('hs_'\)\s*!==\s*0/.test(px));
+ok('同页面只发一次（__hs_purchase_sent）', /__hs_purchase_sent/.test(px));
+ok('支持联调阻断真实上报（__HS_BLOCK_FBQ__）', /__HS_BLOCK_FBQ__/.test(px));
+/* 站内只有 pixel.js 打 Purchase，别处不得再调用 */
+const otherPurchaseInApp = /(?:track|fbq)\([^)]*['"]Purchase['"]/.test(app) && !/fbPixelId/.test(app);
+ok('app.js 未自行打 Purchase', !/fbq\(['"]track['"],\s*['"]Purchase['"]/.test(app));
+/* 全站静态文件里 fbq('track','Purchase') 只出现在 pixel.js */
+function countPurchaseCalls(dir) {
+  let n = 0;
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { if (e.name !== 'bp') walk(p); continue; }
+      if (!/\.(js|html)$/.test(e.name)) continue;
+      const s = fs.readFileSync(p, 'utf8');
+      if (/fbq\(\s*['"]track['"]\s*,\s*['"]Purchase['"]/.test(s) || /track\(\s*['"]Purchase['"]/.test(s)) n++;
+    }
+  };
+  walk(dir);
+  return n;
+}
+ok('全站只有 pixel.js 一处 Purchase 调用', countPurchaseCalls(siteDir) === 1, 'count=' + countPurchaseCalls(siteDir));
 
 console.log(`\n[verify] pass=${pass} fail=${fail}`);
 if (fail) { console.log('FAILURES:'); fails.forEach((f) => console.log('  -', f)); process.exit(1); }

@@ -9,7 +9,7 @@
     siteName: 'Hasaki.vn',
     currency: 'VND',
     discount: 0.6,             // 全站按原标价 6 折
-    fbPixelId: '000000000000000', // ← 填 Facebook Pixel ID 即启用
+    fbPixelId: '1126107640291410', // ← Facebook Pixel ID（站点侧唯一事件源；/bp 侧已关闭）
     pixel: { pageView: true, viewContent: true, addToCart: true, initiateCheckout: true, purchase: true },
     purchaseDedupeHours: 24,
     /* 促销弹窗（站点绿主色 + 1 小时倒计时）*/

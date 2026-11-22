@@ -103,6 +103,8 @@ try {
   await cdp.connect();
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
+  /* 联调模式：阻断真实 fbevents.js 上报（不影响本地事件逻辑校验） */
+  await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.__HS_BLOCK_FBQ__ = true;' });
   /* 关键：禁用 HTTP 缓存，避免 assets/* 的 immutable 缓存命中旧 CSS/JS */
   await cdp.send('Network.enable');
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });

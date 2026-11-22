@@ -102,12 +102,63 @@
       n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
       if (!f._fbq) f._fbq = n;
       n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+      if (blocked()) return; /* 联调模式：只留本地队列，不请求 fbevents.js */
       t = b.createElement(e); t.async = !0; t.src = v;
       s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     window.fbq('init', pid());
     if (cfg().pageView) window.fbq('track', 'PageView');
+    guardFbq();
+    /* fbevents.js 加载后会接管 window.fbq，这里再兜一次 */
+    setTimeout(guardFbq, 1200);
+    setTimeout(guardFbq, 3000);
   };
+
+  /* 测试/联调时用 window.__HS_BLOCK_FBQ__ = true 阻断真实上报 */
+  function blocked() { return window.__HS_BLOCK_FBQ__ === true; }
+
+  /* =========================================================================
+   * 防双计：只允许「站点自己」发 Purchase（eventID 以 hs_ 开头），且同页面只发一次。
+   * /bp/connector.js 的像素开关虽然已关（config.json pixel_enabled=false），
+   * 这里再包一层 —— 即使有人把开关打开，它发的 Purchase 也会被丢弃。
+   * ======================================================================= */
+  function guardFbq() {
+    var fbq = window.fbq;
+    if (!fbq) return;
+    if (window.__hs_px_guard) return;
+    /* 等 fbevents.js 真正接管（callMethod 就绪）后再包，否则会把队列桩包死 */
+    if (typeof fbq.callMethod !== 'function') {
+      if ((window.__hs_px_guard_tries = (window.__hs_px_guard_tries || 0) + 1) < 40) setTimeout(guardFbq, 300);
+      return;
+    }
+    window.__hs_px_guard = true;
+    var orig = fbq;
+    var wrapped = function () {
+      var args = [].slice.call(arguments);
+      if (args[0] === 'track' && String(args[1] || '').toLowerCase() === 'purchase') {
+        var opts = args[3] || {};
+        var eventId = String(opts.eventID || '');
+        /* 不是站点发的（例如 /bp 的 bp_xxx）→ 直接丢弃 */
+        if (eventId.indexOf('hs_') !== 0) {
+          try { console.warn('[hs] 忽略非站点来源的 Purchase（eventID=' + (eventId || 'none') + '）'); } catch (e) {}
+          return;
+        }
+        if (window.__hs_purchase_sent) {
+          try { console.warn('[hs] 忽略重复 Purchase'); } catch (e) {}
+          return;
+        }
+        window.__hs_purchase_sent = true;
+      }
+      return orig.apply(this, args);
+    };
+    wrapped.callMethod = orig.callMethod;
+    wrapped.queue = orig.queue || [];
+    wrapped.loaded = true;
+    wrapped.version = orig.version || '2.0';
+    wrapped.push = wrapped;
+    window.fbq = wrapped;
+    window._fbq = wrapped;
+  }
 
   function track(name, params, eventId) {
     if (!enabled() || !window.fbq) return false;
@@ -174,6 +225,7 @@
     }
 
     FIRED = true;
+    window.__hs_purchase_sent = true;
     writeRec({ k: key, t: Date.now(), order: order });
 
     var d = new Date();

@@ -16,6 +16,9 @@
     page: Number(HS.param('page', '1')) || 1,
   };
 
+  /* /deals 页：只显示有促销进度的商品（不是全量列表） */
+  if (!state.slug && location.pathname.replace(/\/+$/, '') === '/deals') state.slug = 'deals';
+
   var all = [];        // 当前全集（row 紧凑数组）
   var cats = [];
   var catMeta = null;

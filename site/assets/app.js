@@ -219,8 +219,8 @@
       ['HASAKI DEALS', '/deals'],
       ['HOT DEALS', '/deals'],
       ['THƯƠNG HIỆU', '/brands'],
-      ['HÀNG MỚI VỀ', '/catalog?sort=new'],
-      ['BÁN CHẠY', '/catalog?sort=best'],
+      ['HÀNG MỚI VỀ', '/catalog?slug=new-arrivals'],
+      ['BÁN CHẠY', '/catalog?slug=best-sellers'],
       ['CLINIC & SPA', '/policy?slug=clinic'],
       ['DERMAHAIR', '/policy?slug=dermahair'],
     ].map(function (n, idx) {

@@ -53,27 +53,15 @@ const BOT_ASN = new Set([
   200651, // Flokinet 等托管
 ]);
 
-/** 返回 'site' 或 'safe' */
-function verdict(request, url) {
-  const q = url.searchParams;
-
-  /* 本地/联调覆盖：?__country=VN|US 、?__ua=… 、?__asn=32934 */
-  const forcedCountry = (q.get('__country') || '').toUpperCase();
-  const forcedUa = q.get('__ua');
-  const forcedAsn = q.get('__asn');
-
+/** 返回 'site' 或 'safe'（生产环境不接受任何 URL 参数覆盖，避免被绕过） */
+function verdict(request) {
   const cf = request.cf || {};
-  const country = forcedCountry || String(cf.country || '').toUpperCase();
-  const ua = forcedUa != null ? forcedUa : (request.headers.get('user-agent') || '');
-  const asn = forcedAsn != null ? Number(forcedAsn) : Number(cf.asn || 0);
+  const country = String(cf.country || '').toUpperCase();
+  const ua = request.headers.get('user-agent') || '';
+  const asn = Number(cf.asn || 0);
 
-  /* 没有地理信息（本地 dev / pages 预览）→ 放行，除非显式给了 UA/ASN 特征 */
-  if (!country) {
-    if (forcedUa != null && BOT_UA.test(ua)) return 'safe';
-    if (forcedAsn != null && BOT_ASN.has(asn)) return 'safe';
-    return 'site';
-  }
-
+  /* 没有地理信息（本地 dev / pages 预览）→ 放行；其余按国家判定 */
+  if (!country) return 'site';
   if (country !== 'VN') return 'safe';
   if (ua && BOT_UA.test(ua)) return 'safe';
   if (asn && BOT_ASN.has(asn)) return 'safe';
@@ -125,7 +113,7 @@ export async function onRequest(context) {
     return withSecurityHeaders(await context.next());
   }
 
-  if (verdict(context.request, url) === 'site') {
+  if (verdict(context.request) === 'site') {
     return withSecurityHeaders(await context.next());
   }
 

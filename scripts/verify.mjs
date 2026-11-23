@@ -212,9 +212,10 @@ ok('/safe 可访问', safeRes.status === 200);
 ok('安全页无品牌字样', !/Hasaki/i.test(safeText), 'contains brand=' + /Hasaki/i.test(safeText));
 ok('安全页自包含（不引站点脚本/样式）', !/\/assets\/(app|pixel|home|promo)\.js/.test(safeText) && !/\/assets\/base\.css/.test(safeText));
 ok('安全页 noindex', /noindex/i.test(safeText));
-ok('安全页是服务条款', /Terms of Service/i.test(safeText));
+ok('安全页是通用电商展示页', /Shop by category|ESSENTIALS/i.test(safeText));
+ok('安全页无品牌', !/Hasaki/i.test(safeText));
 ok('安全页不含信用卡/支付字段字样',
-  !/(credit\s*card|debit\s*card|payment\s*card|card\s*number|cvv|信用卡|银行卡)/i.test(safeText));
+  !/(credit\s*card|debit\s*card|payment\s*card|card\s*number|cvv|信用卡|银行卡|checkout)/i.test(safeText));
 const mw = fs.readFileSync(path.join(ROOT, 'functions/_middleware.js'), 'utf8');
 ok('中间件按国家分流', /cf\.country/.test(mw) && /'VN'/.test(mw));
 ok('非越南返回安全页而非跳转', /status:\s*200/.test(mw) && /SAFE_ASSET/.test(mw));

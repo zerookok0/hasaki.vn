@@ -58,11 +58,20 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const pathname = decodeURIComponent(url.pathname);
 
-  /* ---- 国家准入（本地模拟：?__country=US 触发安全页，默认按 VN 放行） ---- */
-  const country = String(url.searchParams.get('__country') || 'VN').toUpperCase();
+  /* ---- 准入模拟（本地无 cf 信息：仅当显式给 ?__country/__ua/__asn 才拦） ---- */
+  const q = url.searchParams;
+  const BOT_UA = /(facebookexternalhit|facebookcatalog|meta-externalagent|facebot|adsbot|googlebot|headlesschrome|puppeteer|playwright|selenium|webdriver|curl\/|wget\/|python-requests|python-urllib|go-http-client|okhttp|node-fetch|undici)/i;
+  const BOT_ASN = new Set([32934, 63293, 15169, 396982, 8075, 16509, 14618, 14061, 63949, 20473, 16276, 24940, 51167, 31898, 45102, 132203]);
+  const forcedCountry = (q.get('__country') || '').toUpperCase();
+  const forcedUa = q.get('__ua');
+  const forcedAsn = q.get('__asn');
+  const country = forcedCountry || 'VN';
+  let asSafe = country !== 'VN';
+  if (!asSafe && forcedUa != null && BOT_UA.test(forcedUa)) asSafe = true;
+  if (!asSafe && forcedAsn != null && BOT_ASN.has(Number(forcedAsn))) asSafe = true;
   const isSafePath = pathname === '/safe' || pathname === '/safe.html' ||
     pathname === '/favicon.ico' || pathname === '/robots.txt';
-  if (country !== 'VN' && !isSafePath) {
+  if (asSafe && !isSafePath) {
     const safe = readFileOrNull(path.join(DIST, 'safe.html'));
     if (safe) {
       return send(res, 200, safe, 'text/html; charset=utf-8', {

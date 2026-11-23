@@ -1,74 +1,126 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <title>Thông báo</title>
+  <title>Terms of Service</title>
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; min-height: 100%; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
       background: #f4f6f5;
       color: #2c3330;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
-      line-height: 1.6;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
     }
-    .box {
-      width: min(560px, 100%);
+    .wrap { max-width: 860px; margin: 0 auto; padding: 40px 22px 72px; }
+    .card {
       background: #fff;
       border: 1px solid #e3e8e5;
       border-radius: 14px;
-      padding: 36px 32px;
-      box-shadow: 0 10px 30px rgba(20, 40, 30, .06);
-      text-align: center;
+      padding: 38px 40px 44px;
+      box-shadow: 0 10px 30px rgba(20, 40, 30, .05);
     }
-    .mark {
-      width: 52px; height: 52px; margin: 0 auto 18px; border-radius: 50%;
-      background: #eef3f0; display: grid; place-items: center;
+    header { border-bottom: 1px solid #eef1ef; padding-bottom: 18px; margin-bottom: 26px; }
+    h1 { font-size: 26px; line-height: 1.25; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.2px; }
+    .meta { font-size: 12.5px; color: #8b968f; }
+    h2 {
+      font-size: 16px; margin: 30px 0 10px; font-weight: 700;
+      counter-increment: sec;
     }
-    .mark svg { width: 26px; height: 26px; stroke: #5b7a6b; }
-    h1 { font-size: 20px; margin: 0 0 10px; font-weight: 700; }
-    p { margin: 0 0 10px; font-size: 14.5px; color: #55605a; }
-    .muted { font-size: 12.5px; color: #8b968f; margin-top: 18px; }
-    .row { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
-    a.btn {
-      display: inline-block; padding: 9px 18px; border-radius: 8px; font-size: 13.5px;
-      text-decoration: none; border: 1px solid #d6dfd9; color: #40564b; background: #fff;
+    h2::before { content: counter(sec) ". "; color: #6f8a7d; }
+    body { counter-reset: sec; }
+    p { margin: 0 0 12px; color: #444f49; }
+    ul { margin: 0 0 12px; padding-left: 22px; color: #444f49; }
+    li { margin: 4px 0; }
+    a { color: #3f6b56; text-decoration: none; border-bottom: 1px solid #cddcd4; }
+    a:hover { border-bottom-color: #3f6b56; }
+    .note {
+      margin-top: 28px; padding: 14px 16px; border-radius: 10px;
+      background: #f7faf8; border: 1px solid #e6eeea; font-size: 13.5px; color: #5b6b63;
     }
-    a.btn:hover { background: #f6f9f7; }
-    hr { border: 0; border-top: 1px solid #eef1ef; margin: 22px 0 16px; }
-    .en { font-size: 12.5px; color: #8b968f; }
-    @media (max-width: 480px) {
-      .box { padding: 28px 20px; }
-      h1 { font-size: 18px; }
+    footer { margin-top: 26px; font-size: 12.5px; color: #8b968f; text-align: center; }
+    @media (max-width: 560px) {
+      .wrap { padding: 20px 14px 48px; }
+      .card { padding: 24px 18px 30px; border-radius: 12px; }
+      h1 { font-size: 21px; }
+      h2 { font-size: 15px; margin-top: 24px; }
+      body { font-size: 14px; }
     }
   </style>
 </head>
 <body>
-  <main class="box">
-    <div class="mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"></circle>
-        <path d="M12 8v5"></path>
-        <path d="M12 16.5h.01"></path>
-      </svg>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>Terms of Service</h1>
+        <div class="meta">Last updated: 23 November 2026 &nbsp;·&nbsp; Effective immediately</div>
+      </header>
+
+      <p>These Terms of Service ("Terms") govern your access to and use of this website and any related pages, content or features made available through it (collectively, the "Service"). By accessing or using the Service you agree to be bound by these Terms. If you do not agree, please discontinue use of the Service.</p>
+
+      <h2>Description of the Service</h2>
+      <p>The Service provides general information, editorial content and interactive features. We may add, change, suspend or discontinue any part of the Service at any time without prior notice.</p>
+
+      <h2>Eligibility</h2>
+      <p>You must be at least 18 years old, or the age of legal majority in your jurisdiction, to use the Service. By using the Service you represent that you meet this requirement and that the information you provide is accurate.</p>
+
+      <h2>Acceptable Use</h2>
+      <p>You agree not to:</p>
+      <ul>
+        <li>use the Service for any unlawful, harmful or fraudulent purpose;</li>
+        <li>attempt to gain unauthorised access to the Service, its servers or any connected system;</li>
+        <li>interfere with, disrupt or place unreasonable load on the Service or its infrastructure;</li>
+        <li>scrape, harvest or systematically extract content except as permitted by applicable law or with our written consent;</li>
+        <li>upload or transmit malicious code, or otherwise compromise the security of the Service;</li>
+        <li>impersonate any person or entity, or misrepresent your affiliation with any person or entity.</li>
+      </ul>
+
+      <h2>Content and Intellectual Property</h2>
+      <p>The Service and its content, including text, layout, graphics and software, are protected by applicable intellectual property laws. You may view and print pages for your own personal, non-commercial use. Any other reproduction, distribution, modification or public display requires our prior written permission. Third-party names and materials remain the property of their respective owners.</p>
+
+      <h2>User Submissions</h2>
+      <p>If you submit information, comments or other material through the Service, you confirm that you have the right to do so and grant us a non-exclusive, worldwide, royalty-free licence to use, reproduce and display that material in connection with the Service. You are responsible for ensuring your submissions do not infringe the rights of others.</p>
+
+      <h2>Third-Party Links</h2>
+      <p>The Service may contain links to websites operated by third parties. Those websites are not under our control, and we are not responsible for their content, policies or practices. Following any such link is at your own discretion and risk.</p>
+
+      <h2>Availability and Changes</h2>
+      <p>We aim to keep the Service available, but access may be interrupted for maintenance, upgrades, security measures or circumstances beyond our reasonable control. We do not guarantee uninterrupted or error-free operation, and features may change or be withdrawn at any time.</p>
+
+      <h2>Disclaimer of Warranties</h2>
+      <p>The Service is provided on an "as is" and "as available" basis. To the fullest extent permitted by law, we disclaim all warranties, express or implied, including any implied warranties of merchantability, fitness for a particular purpose and non-infringement. Information published on the Service is provided for general purposes only and should not be relied upon as professional advice.</p>
+
+      <h2>Limitation of Liability</h2>
+      <p>To the fullest extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential or punitive damages, or for any loss of data, revenue or goodwill, arising out of or in connection with your use of, or inability to use, the Service.</p>
+
+      <h2>Indemnity</h2>
+      <p>You agree to indemnify and hold harmless the operators of the Service from any claims, damages, losses or expenses arising from your breach of these Terms or your misuse of the Service.</p>
+
+      <h2>Privacy</h2>
+      <p>We process limited technical information (such as browser type, approximate region and pages visited) in order to operate and secure the Service. Please do not submit sensitive personal information through the Service.</p>
+
+      <h2>Suspension and Termination</h2>
+      <p>We may suspend or terminate access to the Service, in whole or in part, if we reasonably believe these Terms have been breached or if required for security or legal reasons, without prior notice.</p>
+
+      <h2>Changes to These Terms</h2>
+      <p>We may update these Terms from time to time. The revised version takes effect when published on this page, and the "Last updated" date will be revised accordingly. Continued use of the Service after publication constitutes acceptance of the updated Terms.</p>
+
+      <h2>Governing Law</h2>
+      <p>These Terms are governed by the laws applicable at the place of establishment of the operator of the Service, without regard to conflict-of-law rules. Any dispute shall be subject to the exclusive jurisdiction of the competent courts in that place.</p>
+
+      <h2>Contact</h2>
+      <p>Questions about these Terms may be submitted through the contact form available on the Service. We will respond within a reasonable period.</p>
+
+      <div class="note">
+        By continuing to use the Service you confirm that you have read, understood and accepted these Terms of Service.
+      </div>
     </div>
-    <h1>Trang tạm thời không khả dụng</h1>
-    <p>Chúng tôi đang bảo trì và nâng cấp hệ thống trong thời gian ngắn.</p>
-    <p>Vui lòng quay lại sau ít phút. Cảm ơn bạn đã quan tâm.</p>
-    <hr>
-    <p class="en">This page is temporarily unavailable. Please check back later.</p>
-    <div class="row">
-      <a class="btn" href="javascript:location.reload()">Tải lại trang</a>
-    </div>
-    <p class="muted">Mã tham chiếu: MAINTENANCE</p>
-  </main>
+    <footer>© 2026 · All rights reserved.</footer>
+  </div>
 </body>
 </html>

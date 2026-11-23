@@ -58,6 +58,19 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   const pathname = decodeURIComponent(url.pathname);
 
+  /* ---- 国家准入（本地模拟：?__country=US 触发安全页，默认按 VN 放行） ---- */
+  const country = String(url.searchParams.get('__country') || 'VN').toUpperCase();
+  const isSafePath = pathname === '/safe' || pathname === '/safe.html' ||
+    pathname === '/favicon.ico' || pathname === '/robots.txt';
+  if (country !== 'VN' && !isSafePath) {
+    const safe = readFileOrNull(path.join(DIST, 'safe.html'));
+    if (safe) {
+      return send(res, 200, safe, 'text/html; charset=utf-8', {
+        'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow',
+      });
+    }
+  }
+
   /* ---- Functions ---- */
   /* ---- Functions（用轻量 request 适配器：undici Request 在流式 body 上会偶发解析失败） ---- */
   if (pathname.startsWith('/api/customer/')) {

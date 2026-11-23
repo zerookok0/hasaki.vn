@@ -38,8 +38,9 @@ function cpDir(src, dst, filter) {
 rm(DIST);
 fs.mkdirSync(DIST, { recursive: true });
 
-/* 1) 页面（自动注入促销弹窗脚本） */
-function injectPromo(html) {
+/* 1) 页面（自动注入促销弹窗脚本；安全页除外——它必须完全自包含） */
+function injectPromo(html, name) {
+  if (name === 'safe.html') return html;
   if (html.indexOf('/assets/promo.js') !== -1) return html;
   return html.replace(/<\/head>/i, '  <script src="/assets/promo.js" defer></script>\n</head>');
 }
@@ -47,7 +48,7 @@ let pages = 0;
 for (const e of fs.readdirSync(SITE, { withFileTypes: true })) {
   if (e.isFile() && e.name.endsWith('.html')) {
     const src = fs.readFileSync(path.join(SITE, e.name), 'utf8');
-    fs.writeFileSync(path.join(DIST, e.name), injectPromo(src));
+    fs.writeFileSync(path.join(DIST, e.name), injectPromo(src, e.name));
     pages++;
   }
 }
@@ -56,7 +57,7 @@ for (const name of DIR_PAGES) {
   if (!fs.existsSync(src)) continue;
   const dir = path.join(DIST, name);
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), injectPromo(fs.readFileSync(src, 'utf8')));
+  fs.writeFileSync(path.join(dir, 'index.html'), injectPromo(fs.readFileSync(src, 'utf8'), name + '.html'));
   pages++;
 }
 

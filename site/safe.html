@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>Thông báo</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f4f6f5;
+      color: #2c3330;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    .box {
+      width: min(560px, 100%);
+      background: #fff;
+      border: 1px solid #e3e8e5;
+      border-radius: 14px;
+      padding: 36px 32px;
+      box-shadow: 0 10px 30px rgba(20, 40, 30, .06);
+      text-align: center;
+    }
+    .mark {
+      width: 52px; height: 52px; margin: 0 auto 18px; border-radius: 50%;
+      background: #eef3f0; display: grid; place-items: center;
+    }
+    .mark svg { width: 26px; height: 26px; stroke: #5b7a6b; }
+    h1 { font-size: 20px; margin: 0 0 10px; font-weight: 700; }
+    p { margin: 0 0 10px; font-size: 14.5px; color: #55605a; }
+    .muted { font-size: 12.5px; color: #8b968f; margin-top: 18px; }
+    .row { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+    a.btn {
+      display: inline-block; padding: 9px 18px; border-radius: 8px; font-size: 13.5px;
+      text-decoration: none; border: 1px solid #d6dfd9; color: #40564b; background: #fff;
+    }
+    a.btn:hover { background: #f6f9f7; }
+    hr { border: 0; border-top: 1px solid #eef1ef; margin: 22px 0 16px; }
+    .en { font-size: 12.5px; color: #8b968f; }
+    @media (max-width: 480px) {
+      .box { padding: 28px 20px; }
+      h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="box">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 8v5"></path>
+        <path d="M12 16.5h.01"></path>
+      </svg>
+    </div>
+    <h1>Trang tạm thời không khả dụng</h1>
+    <p>Chúng tôi đang bảo trì và nâng cấp hệ thống trong thời gian ngắn.</p>
+    <p>Vui lòng quay lại sau ít phút. Cảm ơn bạn đã quan tâm.</p>
+    <hr>
+    <p class="en">This page is temporarily unavailable. Please check back later.</p>
+    <div class="row">
+      <a class="btn" href="javascript:location.reload()">Tải lại trang</a>
+    </div>
+    <p class="muted">Mã tham chiếu: MAINTENANCE</p>
+  </main>
+</body>
+</html>

@@ -204,5 +204,24 @@ function countPurchaseCalls(dir) {
 }
 ok('全站只有 pixel.js 一处 Purchase 调用', countPurchaseCalls(siteDir) === 1, 'count=' + countPurchaseCalls(siteDir));
 
+/* ---------- 9. 国家安全页（cloaking） ---------- */
+console.log('\n[9] 国家安全页');
+const safeRes = await get('/safe');
+const safeText = await safeRes.text();
+ok('/safe 可访问', safeRes.status === 200);
+ok('安全页无品牌字样', !/Hasaki/i.test(safeText), 'contains brand=' + /Hasaki/i.test(safeText));
+ok('安全页自包含（不引站点脚本/样式）', !/\/assets\/(app|pixel|home|promo)\.js/.test(safeText) && !/\/assets\/base\.css/.test(safeText));
+ok('安全页 noindex', /noindex/i.test(safeText));
+const mw = fs.readFileSync(path.join(ROOT, 'functions/_middleware.js'), 'utf8');
+ok('中间件按国家分流', /cf\.country/.test(mw) && /'VN'/.test(mw));
+ok('非越南返回安全页而非跳转', /status:\s*200/.test(mw) && /SAFE_ASSET/.test(mw));
+const safeUs = await get('/?__country=US');
+const safeUsText = await safeUs.text();
+ok('非 VN 访问首页得到安全页', /Thông báo/.test(safeUsText) && !/Hasaki\.vn - Mỹ phẩm/i.test(safeUsText));
+ok('非 VN 访问 /api 也得到安全页', (await (await get('/api/cart?__country=US')).text()).indexOf('"currency"') === -1);
+ok('非 VN 访问 /data 也得到安全页', (await (await get('/data/index.json?__country=US')).text()).indexOf('"rows"') === -1);
+const vnHome = await (await get('/')).text();
+ok('越南（默认）访问首页仍是正式站', /Hasaki\.vn - Mỹ phẩm/i.test(vnHome));
+
 console.log(`\n[verify] pass=${pass} fail=${fail}`);
 if (fail) { console.log('FAILURES:'); fails.forEach((f) => console.log('  -', f)); process.exit(1); }

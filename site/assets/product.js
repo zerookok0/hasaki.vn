@@ -331,12 +331,19 @@
       try {
         var idx = await HS.loadIndex();
         var rows = (idx.rows || []);
+        var used = {};
+        used[P.id] = 1;
+        var myKey = baseKey(P.name);
         var sameBrand = [], related = [];
-        for (var i = 0; i < rows.length && (sameBrand.length < 5 || related.length < 5); i++) {
+        for (var i = 0; i < rows.length && (sameBrand.length < 6 || related.length < 6); i++) {
           var r = rows[i];
-          if (r[0] === P.id) continue;
-          if (sameBrand.length < 5 && P.brand && r[2] === P.brand.name) sameBrand.push(HS.rowToProduct(r));
-          if (related.length < 5 && P.cat_name && r[6] === P.cat_name) related.push(HS.rowToProduct(r));
+          if (used[r[0]]) continue;
+          /* 同款不同规格（变体）不放进推荐位，避免"看起来是同一个商品" */
+          if (baseKey(r[1]) === myKey) { used[r[0]] = 1; continue; }
+          var isBrand = P.brand && r[2] === P.brand.name;
+          var isCat = P.cat_name && r[6] === P.cat_name;
+          if (sameBrand.length < 6 && isBrand) { sameBrand.push(HS.rowToProduct(r)); used[r[0]] = 1; continue; }
+          if (related.length < 6 && isCat) { related.push(HS.rowToProduct(r)); used[r[0]] = 1; continue; }
         }
         P.sameBrand = sameBrand;
         P.related = related;
